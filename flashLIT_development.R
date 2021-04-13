@@ -69,7 +69,7 @@
 
 # Term-node identifiers	---
 # theme node
-# category list (fro Aterms)
+# category list (for Aterms)
 # TID	term	node	node specificity	RID	method	source	date	
 # AID	Aterm	category	these can be identifying e.g. review papers, or species, locations/habitats etc. Can initiate with e.g. country lists, common habitat types, common bee groups and species. 						
 # 
@@ -125,20 +125,20 @@ library(revtools)   # grouping (optional)
 # initiate database -----------------------------
 
 # import data. 
+# Data can come as a bibliography in many formats, and can be imported via revtools or scimeetr.
+# Revtools imports from either .bib or .txt (.bib I think works better). data are given revtools names:
+# https://github.com/mjwestgate/revtools/blob/master/R/tag_lookup.R
+# Alternatively, scimeetr imports to a specialised object, from wos or scopus ris text files ONLY, automatically removing duplicates. 
 
-# Data can come as a bibliography in many formats. We can use revtools to import the data from either .bib or .txt (.bib I think works better) 
-
+# revtools bib
 # dd <- "./data/raw_WoS_20201105/as_bib/"
 # rev.df <- revtools::read_bibliography(list.files(dd, full.names = TRUE))
 
-# this currently fails 
-#dd <- "./data/raw_WoS_20201105/as_txt/"
-#revtools::read_bibliography(list.files(dd, full.names = TRUE))
+# revtools txt - currently fails 
+# dd <- "./data/raw_WoS_20201105/as_txt/"
+# revtools::read_bibliography(list.files(dd, full.names = TRUE))
 
-# data are given revtools names:
-# https://github.com/mjwestgate/revtools/blob/master/R/tag_lookup.R
-
-# Alternatively, scimeetr imports to a specialised object, from wos ris text files ONLY, automatically removing duplicates. 
+# scimeetr import 
 dd <- "./data/raw_WoS_20201105/as_txt/"
 sci.df <- scimeetr::import_wos_files(dd)$com1$dfsci
 
@@ -185,6 +185,7 @@ DB0 <- scib.df %>%
   tibble::tibble() %>% 
   dplyr::select(doi, 
                 author, 
+                title_orig = title,
                 title, 
                 keywords = author_keywords, 
                 keywords_plus, 
@@ -292,7 +293,7 @@ clean_text <- function(x, sep = NULL){
 # clean our data into a new version of the database
 
 DB1 <- DB0 %>% 
-  mutate(across(c(keywords, keywords_plus), ~map_chr(.x, clean_text, sep = "; "))) %>%    ### here we need to keep keyword bigrams together!
+  mutate(across(c(keywords, keywords_plus), ~map_chr(.x, clean_text, sep = "; "))) %>%    ### here we need to keep keyword phrases together!
   mutate(across(c(title, abstract), clean_text))
 
 quick_check(DB1)
@@ -319,6 +320,7 @@ stem_dictionary <- function(df, ...){
 }
 
 stemDict <- stem_dictionary(DB1, title, abstract, keywords, keywords_plus)
+saveRDS(stemDict, "flashLIT_DB1_stemDict.RDS")
 
 # functions to stem, them complete using the dictionary
 
@@ -415,7 +417,7 @@ keywords_from_columns <- function(df, .cols, .sep = "; "){
     na_if(y="")
 }
 
-# apply in a loop
+# apply in a loop to fill in the missing keywords
 for (i in which(is.na(DB1$keywords))){
   DB1$keywords[i] <- DB1[i, ] %>% keywords_from_columns(.cols = c(title, abstract))
 }
@@ -483,7 +485,7 @@ cited_references_cleanlist <- function(df){
 
 CitedRefList <-  cited_references_tolist(DB1)  # Starts at almost 141K lines
 CitedRefList$CID %>% unique() %>% length()     # of which there are almost 60k unique 
-CitedRefClean <-  cited_references_cleanlist(CitedRefList) # reduces to 42,245 lines after cleaning (not excluding duplicates)
+CitedRefClean <-  cited_references_cleanlist(CitedRefList) # reduces to 42,245 lines after cleaning
 
 # extract the data base references into the same format -----
 
@@ -538,11 +540,22 @@ mAYVP %>%
 # Steffan-Dewenter OK - doi y has a typo (missing i)
 
 CitedRefMatch <- bind_rows(mDOI, mALL, mAYVP) %>% 
-  select(CID,  PID) %>% 
+  select(CID, PID) %>% 
   distinct()
 
-# this results in 1393 cited references that can be tied to the records in our database. 
+# this results in 1393 cited references that can be tied to the records in our database, approx 58% of our database, and only 3.3% of all the unique (cleaned) bibliography entries.
 # This could be refined further, and maybe get a few more, but would likely be a low benefit:cost.
+
+# Add a column which includes the cited references that can be matched (i.e. PID's of matched cited references) in each PID
+# join fromPID to the matched ones
+CitedMatched <- CitedRefMatch %>% 
+  left_join(CitedRefList, by = "CID") %>% 
+  select(citedPID = PID, PID = fromPID) %>% 
+  group_by(PID) %>% 
+  summarise(citedPID_list = list(citedPID))
+
+DB1 <- DB1 %>% 
+  left_join(CitedMatched, by = "PID")
 
 # note, we can also use this as an opporutnity to fill in some of the missing DOIs
 
@@ -588,6 +601,7 @@ quick_check(DB1)
 DB1[is.na(DB0$keywords_plus),]$keywords_plus %>% head()
 
 # add a column that determines the number of cited references that are found in our database
+# this could now be done by counting the list entries in the citedPID_list
 DB1 <- DB1 %>% 
   mutate(number_cited_matches = map_dbl(PID, function(x){
   cr_list <- CitedRefList %>% filter(fromPID == x)
@@ -633,6 +647,10 @@ DB1 <- DB1 %>%
 
 quick_check(DB1) %>% print(n=21)
 
+# finally, fill in year from early access date
+DB1 <- DB1 %>% 
+  mutate(age = as.integer(format(Sys.time(), "%Y")) - as.integer(ifelse(is.na(year), str_extract(string = early_access_date, pattern = "[0-9]{4}"), year)))
+
 # end of cleaning and preparing the data
 # we now have cleaned data:
 # all titles, keywords, keywords_plus, and abstract are cleaned and stemmed
@@ -640,11 +658,11 @@ quick_check(DB1) %>% print(n=21)
 # authors and cited references split into constituent lists
 
 saveRDS(DB1, "flashLIT_DB1.RDS")
-DB1 <- readRDS("flashLIT_DB1.RDS")
+
 
 # Grouping the data ------------------------------------------------------------------------------
 
-DB1_copy <- DB1
+DB1 <- readRDS("flashLIT_DB1.RDS")
 
 # we want to retain one copy of the data, create a new group ID, and progressively cluster into smaller groups. 
 
@@ -656,6 +674,8 @@ DB1_copy <- DB1
 # Scimeetr uses a graph clustering method (louvain or fast_greedy). It takes a graph where the nodes are papers, and the arcs are shared links (cited_references, title, abstract, keywords, authors). Titles and abstracts are composited into dtm before coupling. This coupling can weight by the type of the link, as well as the strength of the link.
 
 # revtools uses an LDA topic model approach (from a dtm), also including bigrams where appropriate.
+# this could be slow when working with multiple data types. 
+# also would need to work out how to combine the different inputs, or outputs.
 
 # the benefits of lourvain are that it determines when to stop.
 # the LDA topic models need a number of topics input.
@@ -670,331 +690,287 @@ DB1_copy <- DB1
 # we can bring this back to a tidy format using 
 # tidytext::tidy(dtm)
 
-# DB1 %>% 
-#  select(author, keywords) %>%   
-#  tidytext::unnest_tokens(keyword, keywords) %>%  # unnest by "word", "ngram" (K = 2), etc
-#  dplyr::count(keyword, sort = TRUE)
-
-
-# basic graph method
-# make edge matrices nodes x nodes showing the proportion of shared links for each element
-# combine these together
-# convert to igraph and cluster
-# select out the cluster
-
-# for cited references, we want the proportion intersecting, as a proportion of the union (as we want non-directional links in this case)
-
-# Essentially we can make a dtm, then for each doc pair, take the sum of the rows, sum(min>=1)/sum(max>=1)
-# this could be sped up or parrallellised https://blog.jdblischak.com/posts/pairwise-overlaps/ 
-
-make_PID_dtm <- function(df, term_col, term_type = "list", splitpattern = "; ",  ngramlength = 2){
-  term_col <- enquo(term_col)
-  dtm <- df %>% 
-    select(PID, term = !!term_col)
-  
-  if(term_type == "list"){
-    dtm <- dtm %>% unnest(term) 
-  } else if (term_type == "text"){
-    dtm <- dtm %>% tidytext::unnest_tokens(term, term)
-  } else if (term_type == "keyword_string"){
-    dtm <- dtm %>% tidytext::unnest_tokens(term, term, token = stringr::str_split, pattern = splitpattern) 
-  } else if (term_type == "text_ngrams"){
-    dtm <- dtm %>% tidytext::unnest_tokens(term, term, token = "ngrams", n = ngramlength)
-  } else {
-    stop("term_type not recognised. Options are 'text', 'keyword_string', or 'text_ngrams'")
-  }
-  
-  dtm %>% 
-    group_by(PID) %>%  
-    dplyr::count(term, sort = TRUE) %>% 
-    pivot_wider(names_from = PID, values_from = n, values_fill = 0)
-}
-
-make_edgelist <- function(ids){
-  ids %>% 
-    combn(., 2) %>% 
-    t() %>% 
-    as.data.frame(stringsAsFactors = FALSE) %>% 
-    setNames(., c("from", "to")) %>% 
-    as_tibble()
-}  
-
-overlap_byEdgelist <- function(dtm, edgelist){
-    edgelist %>% 
-      mutate(overlap = map2_dbl(from, to, function(from.pid, to.pid){
-        xy <- dtm %>% 
-          select(x = matches(from.pid), y = matches(to.pid)) %>% 
-          mutate(pair.overlap = map2_dbl(x, y, ~sum(.x>=1, .y>=1)))
-        sum(xy$pair.overlap==2)/sum(xy$pair.overlap==1)
-      })) %>% 
-        pull(overlap)
-}
-
-overlap_byEdgelist_parallel <- function(dtm, edgelist){
-  foreach::foreach(i=iter(edgelist, by = 'row'),
-                   .packages = c("dplyr", "purrr"),
-                   .combine = c) %dopar% {
-  i %>% 
-   map2_dbl(from, to, function(from.pid, to.pid){
-      xy <- dtm %>% 
-        select(x = matches(from.pid), y = matches(to.pid)) %>% 
-        mutate(pair.overlap = map2_dbl(x, y, ~sum(.x>=1, .y>=1)))
-      sum(xy$pair.overlap==2)/sum(xy$pair.overlap==1)
-   })
-                     }
-}
-
-library(iterators)
-library(foreach)
-
-title_dtm <- make_PID_dtm(DB1, title, "text") 
-
-edgelist <- make_edgelist(DB1$PID[1:100]) 
-
-edgelist <- edgelist %>% 
-  add_column(title_overlap = overlap_byEdgelist(title_dtm, edgelist))
-
-# this is SLOW 
+# --- modify scimeetr process ---
 # Scimeetr uses https://jangorecki.gitlab.io/-/data.table/-/jobs/640724/artifacts/public/html/data.table.html 
-
-
-overlap_fromPID(DB1[1:4,], PID00001,PID00002, cited_references_list, "list")  # elements already in a list
-overlap_fromPID                 # a single block of text (sep words with " ")
-overlap_fromPID(DB1[1:4,], PID00001,PID00002, abstract, "text_ngrams")        # a single block of text, with ngrams (sep words with " ", into ngrams)
-overlap_fromPID(DB1[1:4,], PID00001,PID00002, keywords, "keyword_string")     # a single string, elements seperated with splitpattern.
-
-
-overlap_PID(DB1, PID00001,PID00002, cited_references_list, "list") # about 5 second per pair.
-
-# OK TAKE 2 - 
-# --- modify scimeetr coupling ---
-
+# this creates a graph weighted by the sum similarity across the different components for the pairs of documents.
 scimeetr_coupling <- function(df, 
                               coupling_by = "abstract, title, keywords, keywordsplus, bibliography, authors, cr_journal", 
-                              title_ngrams = 2, 
-                              abstract_ngrams = 2){
-  cby_abstract <- grepl(coupling_by, "abstract")
-  cby_title <- grepl(coupling_by, "title")
-  cby_keywords <- grepl(coupling_by, "keywords")
-  cby_keywordsplus <- grepl(coupling_by, "keywordsplus")
-  cby_bibliography <- grepl(coupling_by, "bibliography")
-  cby_authors <- grepl(coupling_by, "authors")
-  cby_cr_journal <- grepl(coupling_by, "cr_journal")
+                              w.tic = 1, w.kw = 1, w.kwp = 1, w.abc = 1, w.auc = 1, w.joc = 1, w.bic = 1, 
+                              ...){
+  # ... placeholder for other subcalls, e.g. to include ngrams within the abstract and title overlaps
   
+  # logical of which vars to couple by
+  cby_title <- grepl(x = coupling_by, pattern = "title")
+  cby_keywords <- grepl(x = coupling_by, pattern = "keywords")
+  cby_keywordsplus <- grepl(x = coupling_by, pattern = "keywordsplus")
+  cby_abstract <- grepl(x = coupling_by, pattern = "abstract")
+  cby_authors <- grepl(x = coupling_by, pattern = "authors")
+  cby_cr_journal <- grepl(coupling_by, pattern = "cr_journal")  
+  cby_bibliography <- grepl(x = coupling_by, pattern = "bibliography")
+
+  # initiate blanks of all of these
+  couple_df_tic <- tibble(PID.x=character(), PID.y=character(), w_ij=numeric())
+  couple_df_kw <- tibble(PID.x=character(), PID.y=character(), w_ij=numeric())
+  couple_df_kwp <- tibble(PID.x=character(), PID.y=character(), w_ij=numeric())
+  couple_df_abc <- tibble(PID.x=character(), PID.y=character(), w_ij=numeric())
+  couple_df_auc <- tibble(PID.x=character(), PID.y=character(), w_ij=numeric())
+  couple_df_joc <- tibble(PID.x=character(), PID.y=character(), w_ij=numeric())
+  couple_df_bic <- tibble(PID.x=character(), PID.y=character(), w_ij=numeric())
+ 
+  # add number of references column
   df <- df %>% 
-    mutate(NR = map_dbl(length(cited_references_list)))
+    mutate(NR = map_dbl(cited_references_list, length))
   
-  # Bibliographic coupling -------------------- here each cr is an element. we used the cleaned list.
-  cr_list <- df$cited_references_list
-  names(cr_list) <- df$PID
-  cr_df <- data.frame('PID' = rep(names(cr_list), sapply(cr_list, length)),
-                      'CR' = unlist(cr_list),
-                       stringsAsFactors=F)
-  couple_df <- inner_join(cr_df, cr_df, by = 'CR') %>%
-    filter(PID.x > PID.y) %>%
-    group_by(PID.x, PID.y) %>%
-    summarise(count = n()) %>%
-    left_join(df[,c('PID', 'NR')], by = c('PID.x' = 'PID'))%>%
-    left_join(df[,c('PID', 'NR')], by = c('PID.y' = 'PID'))%>%
-    mutate(w_ij = count/sqrt(NR.x * NR.y)) %>%
+  # then extract if required
+  
+  # Title coupling ---------------------------- 
+    # this uses the pre-cleaned title. 
+    # here, we use words from the titles to determine overlap - so draw these out using a dtm
+    # still need to include ngrams in this process
+  if(cby_title) {
+    documents <- tm::Corpus(tm::VectorSource(df$title))
+    myTdm <- tm::DocumentTermMatrix(documents)
+    myTdm2 <- tm::removeSparseTerms(myTdm, sparse = 0.99)
+    dtm2list <- apply(myTdm2, 1, function(x) {
+      paste(rep(names(x), x), collapse=" ")
+    })
+    ti_list <- strsplit(dtm2list, "[ ]")
+    names(ti_list) <- df$PID
+    ti_df <- data.frame('PID'= rep(names(ti_list), sapply(ti_list, length)),
+                        'TI' =  unlist(ti_list),
+                        stringsAsFactors=F)
+    couple_df <- inner_join(ti_df, ti_df, by = 'TI') %>%
+      filter(PID.x > PID.y) %>%
+      group_by(PID.x, PID.y) %>%
+      summarise(count = n()) %>%
+      left_join(df[,c('PID', 'title')], by = c('PID.x' = 'PID'))%>%
+      left_join(df[,c('PID', 'title')], by = c('PID.y' = 'PID'))%>%   
+      mutate(NR.x = str_count(title.x, " "),
+             NR.y = str_count(title.y, " "),
+             w_ij = count/sqrt(NR.x * NR.y)) %>%
+      select(PID.x, PID.y, w_ij)
+    couple_df$w_ij[couple_df$w_ij == Inf] <- 0
+    couple_df_tic <- filter(couple_df, w_ij != 0) %>% 
+      ungroup()
+  }
+  
+  # keyword coupling -------------------  
+    # here each author supplied keyword or keyword phrase is an element. 
+    # author supplied keywords are words authors have determined are relevant to their work.
+    # these should be pre-cleaned for best results
+  if(cby_keywords){
+    kw_list <- strsplit(df$keywords, "[;][ ]")
+    names(kw_list) <- df$PID
+    kw_df <- data.frame('PID'= rep(names(kw_list), sapply(kw_list, length)),
+                        'KW' =  unlist(kw_list),
+                        stringsAsFactors=F)
+    kw_length <- group_by(kw_df, PID) %>%
+      summarize(NK = n())
+    couple_df <- inner_join(kw_df, kw_df, by = 'KW') %>%
+      filter(PID.x > PID.y) %>%
+      group_by(PID.x, PID.y) %>%
+      summarise(count = n()) %>%
+      left_join(kw_length, by = c('PID.x' = 'PID'))%>%
+      left_join(kw_length, by = c('PID.y' = 'PID'))%>%
+      mutate(w_ij = count/sqrt(NK.x * NK.y)) %>%
+      select(PID.x, PID.y, w_ij)
+    couple_df$w_ij[couple_df$w_ij == Inf] <- 0
+    couple_df_kw <- filter(couple_df, w_ij != 0) %>% 
+      ungroup()
+  }
+  
+  # keyword_plus coupling ------------------- 
+    # keywords_plus are a WoS thing, aimed at extracting information from the entire cited references
+    # and therefore useful for overlap in papers.
+    # again, this should be a pre-cleaned list.
+  if(cby_keywordsplus){
+    kwp_list <- strsplit(df$keywords_plus, "[;][ ]")
+    names(kwp_list) <- df$PID
+    kwp_df <- data.frame('PID'= rep(names(kwp_list), sapply(kwp_list, length)),
+                         'KW' =  unlist(kwp_list),
+                         stringsAsFactors=F)
+    kwp_length <- group_by(kwp_df, PID) %>%
+      summarize(NK = n())
+    couple_df <- inner_join(kwp_df, kwp_df, by = 'KW') %>%
+      filter(PID.x > PID.y) %>%
+      group_by(PID.x, PID.y) %>%
+      summarise(count = n()) %>%
+      left_join(kwp_length, by = c('PID.x' = 'PID'))%>%
+      left_join(kwp_length, by = c('PID.y' = 'PID'))%>%
+      mutate(w_ij = count/sqrt(NK.x * NK.y)) %>%
+      select(PID.x, PID.y, w_ij)
+    couple_df$w_ij[couple_df$w_ij == Inf] <- 0
+    couple_df_kwp <- filter(couple_df, w_ij != 0) %>% 
+      ungroup()
+  } 
+  
+  # Abstract coupling ---------------------------- 
+    # here, we use words from the abstracts to determine overlap - so draw these out using a dtm
+    # ideally using pre-cleaned abstracts
+    # still need to include ngrams in this process
+  if(cby_abstract){
+    documents <- tm::Corpus(tm::VectorSource(df$abstract))
+    myTdm <- tm::DocumentTermMatrix(documents)
+    myTdm2 <- tm::removeSparseTerms(myTdm, sparse = 0.99)
+    dtm2list <- apply(myTdm2, 1, function(x) {
+      paste(rep(names(x), x), collapse=" ")
+    })
+    ab_list <- strsplit(dtm2list, "[ ]")
+    names(ab_list) <- df$PID
+    ab_df <- data.frame('PID'= rep(names(ab_list), sapply(ab_list, length)),
+                        'AB' =  unlist(ab_list),
+                        stringsAsFactors=F)
+    couple_df <- inner_join(ab_df, ab_df, by = 'AB') %>%
+      filter(PID.x > PID.y) %>%
+      group_by(PID.x, PID.y) %>%
+      summarise(count = n()) %>%
+      left_join(df[,c('PID', 'abstract')], by = c('PID.x' = 'PID'))%>%
+      left_join(df[,c('PID', 'abstract')], by = c('PID.y' = 'PID'))%>%   
+      mutate(NR.x = str_count(abstract.x, " "),
+             NR.y = str_count(abstract.y, " "),
+             w_ij = count/sqrt(NR.x * NR.y)) %>%
+      select(PID.x, PID.y, w_ij)
+    couple_df$w_ij[couple_df$w_ij == Inf] <- 0
+    couple_df_abc <- filter(couple_df, w_ij != 0) %>% 
+      ungroup()
+  } 
+  
+  # author coupling --------------------------------------------------- 
+    # similar to keywords, here we use a pre-cleaned author list
+  if(cby_authors){
+    au_list <- df$author_list
+    names(au_list) <- df$PID
+    au_df <- data.frame('PID'= rep(names(au_list), sapply(au_list, length)),
+                        'AU' =  unlist(au_list),
+                        stringsAsFactors=F)
+    au_length <- group_by(au_df, PID) %>%
+      summarize(NAU = n())
+    couple_df <- inner_join(au_df, au_df, by = 'AU') %>%
+      filter(PID.x > PID.y) %>%
+      group_by(PID.x, PID.y) %>%
+      summarise(count = n()) %>%
+      left_join(au_length, by = c('PID.x' = 'PID'))%>%
+      left_join(au_length, by = c('PID.y' = 'PID'))%>%
+      mutate(w_ij = count/sqrt(NAU.x * NAU.y)) %>%
+      select(PID.x, PID.y, w_ij)
+    couple_df$w_ij[couple_df$w_ij == Inf] <- 0
+    couple_df_auc <- filter(couple_df, w_ij != 0) %>% 
+      ungroup()
+  }
+  
+  # Journal coupling ------------------------------------------------------ 
+    # here the journals came from the cited references (not the journals of the papers themselves)
+    # we havent yet pre-cleaned this, aside from pre-cleaning the cited references
+  if(cby_cr_journal){
+    cr_list <- df$cited_references_list
+    names(cr_list) <- df$PID
+    cr_df <- data.frame('PID' = rep(names(cr_list), sapply(cr_list, length)),
+                        'CR' = unlist(cr_list),
+                        stringsAsFactors=F)
+    # extract the entry after the year and before the next comma
+    cr_df <- cr_df %>% 
+      mutate(CRJ = map_chr(CR, ~str_extract(.x, pattern = "[0-9]{4}[,][ ][^,]+") %>% str_remove(pattern = "[0-9]{4}[,][ ]"))) %>% 
+      select(-CR)
+    rm(cr_list)
+    tmp <- cr_df %>% 
+      group_by(PID, CRJ) %>%
+      summarise(jo_freq = n()) %>%
+      filter(!is.na(CRJ)) %>% 
+      filter(!CRJ == "NA")
+    couple_df <- inner_join(tmp, tmp, by = 'CRJ') %>%
+      filter(PID.x > PID.y) %>%
+      mutate(min_jo = min(jo_freq.x, jo_freq.y)) %>%
+      select(PID.x, PID.y, min_jo) %>%
+      group_by(PID.x, PID.y) %>%
+      summarise(count = sum(min_jo)) %>%
+      left_join(df[,c('PID', 'NR')], by = c('PID.x' = 'PID'))%>%
+      left_join(df[,c('PID', 'NR')], by = c('PID.y' = 'PID'))%>%
+      mutate(w_ij = count/sqrt(NR.x * NR.y)) %>%
+      select(PID.x, PID.y, w_ij)
+    rm(tmp)
+    gc()  # It can be useful to call gc after a large object has been removed, as this may prompt R to return memory to the operating system.
+    couple_df$w_ij[couple_df$w_ij == Inf] <- 0
+    couple_df_joc <- filter(couple_df, w_ij != 0) %>% 
+      ungroup()
+  }
+  
+  # Bibliographic coupling -------------------- 
+    # here each cr is an element. 
+    # this should be a pre-cleaned list named cr_list
+  if(cby_bibliography){
+    cr_list <- df$cited_references_list
+    names(cr_list) <- df$PID
+    cr_df <- data.frame('PID' = rep(names(cr_list), sapply(cr_list, length)),
+                        'CR' = unlist(cr_list),
+                        stringsAsFactors=F)
+    couple_df <- inner_join(cr_df, cr_df, by = 'CR') %>%
+      filter(PID.x > PID.y) %>%
+      group_by(PID.x, PID.y) %>%
+      summarise(count = n()) %>%
+      left_join(df[,c('PID', 'NR')], by = c('PID.x' = 'PID'))%>%
+      left_join(df[,c('PID', 'NR')], by = c('PID.y' = 'PID'))%>%
+      mutate(w_ij = count/sqrt(NR.x * NR.y)) %>%
+      select(PID.x, PID.y, w_ij)
+    rm(cr_df)
+    couple_df$w_ij[couple_df$w_ij == Inf] <- 0
+    couple_df_bic <- filter(couple_df, w_ij != 0) %>% 
+      ungroup()
+  } 
+
+  
+  # Join all the coupled data groups ---------------------------------------------
+  # interestingly this misses a suffix on the second join, no matter what it is 
+  couple_df <- couple_df_tic %>% 
+    full_join(couple_df_kw, by = c('PID.x', 'PID.y'), suffix = c(".tic", ".kw")) %>%
+    full_join(couple_df_kwp, by = c('PID.x', 'PID.y'), suffix = c('', '.kwp')) %>%
+    full_join(couple_df_abc, by = c('PID.x', 'PID.y'), suffix = c('', '.abc')) %>%
+    full_join(couple_df_auc, by = c('PID.x', 'PID.y'), suffix = c('', '.auc')) %>%
+    full_join(couple_df_joc, by = c('PID.x', 'PID.y'), suffix = c('', '.joc')) %>%
+    full_join(couple_df_bic, by = c('PID.x', 'PID.y'), suffix = c('', '.bic')) %>% 
+    rename(w_ij.kwp = w_ij)
+  
+  # replace all the na with zero, and scale to 1
+  couple_df <- couple_df %>% 
+    mutate(across(everything(), replace_na, replace = 0)) %>% 
+    mutate(across(w_ij.tic:w_ij.bic, scales::rescale)) 
+
+  # weight 
+  couple_df <- couple_df %>% 
+    mutate(w_ij = 
+            w_ij.tic * w.tic +
+            w_ij.kw  * w.kw +
+            w_ij.kwp * w.kwp +
+            w_ij.abc * w.abc +
+            w_ij.auc * w.auc +
+            w_ij.joc * w.joc +
+            w_ij.bic * w.bic 
+    ) %>%
     select(PID.x, PID.y, w_ij)
-  rm(cr_df)
-  couple_df$w_ij[couple_df$w_ij == Inf] <- 0
-  couple_df_bic <- filter(couple_df, w_ij != 0)
   
-  # keyword coupling -------------------  using the author supplied keywords
-  kw_list <- strsplit(df$keywords, "[;][ ]")
-  names(kw_list) <- df$PID
-  kw_df <- data.frame('PID'= rep(names(kw_list), sapply(kw_list, length)),
-                       'KW' =  unlist(kw_list),
-                       stringsAsFactors=F)
-  kw_length <- group_by(kw_df, PID) %>%
-    summarize(NK = n())
-  couple_df <- inner_join(kw_df, kw_df, by = 'KW') %>%
-    filter(PID.x > PID.y) %>%
-    group_by(PID.x, PID.y) %>%
-    summarise(count = n()) %>%
-    left_join(kw_length, by = c('PID.x' = 'PID'))%>%
-    left_join(kw_length, by = c('PID.y' = 'PID'))%>%
-    mutate(w_ij = count/sqrt(NK.x * NK.y)) %>%
-    select(PID.x, PID.y, w_ij)
-  couple_df$w_ij[couple_df$w_ij == Inf] <- 0
-  couple_df_kw <- filter(couple_df, w_ij != 0)
-  
-  # keyword_plus coupling ------------------- keywords drawn from the titles of the cited references
-  kwp_list <- strsplit(df$keywords_plus, "[;][ ]")
-  names(kwp_list) <- df$PID
-  kwp_df <- data.frame('PID'= rep(names(kwp_list), sapply(kwp_list, length)),
-                       'KW' =  unlist(kwp_list),
-                       stringsAsFactors=F)
-  kwp_length <- group_by(kwp_df, PID) %>%
-    summarize(NK = n())
-  couple_df <- inner_join(kwp_df, kwp_df, by = 'KW') %>%
-    filter(PID.x > PID.y) %>%
-    group_by(PID.x, PID.y) %>%
-    summarise(count = n()) %>%
-    left_join(kwp_length, by = c('PID.x' = 'PID'))%>%
-    left_join(kwp_length, by = c('PID.y' = 'PID'))%>%
-    mutate(w_ij = count/sqrt(NK.x * NK.y)) %>%
-    select(PID.x, PID.y, w_ij)
-  couple_df$w_ij[couple_df$w_ij == Inf] <- 0
-  couple_df_kwp <- filter(couple_df, w_ij != 0)
-  
-  # Title coupling ---------------------------- this uses the pre-cleaned title. this and below needs to be modified still. need to include ngrams in this process
-  documents <- tm::Corpus(tm::VectorSource(df$title))
-  myTdm <- tm::DocumentTermMatrix(documents)
-  myTdm2 <- tm::removeSparseTerms(myTdm, sparse = 0.99)
-  dtm2list <- apply(myTdm2, 1, function(x) {
-    paste(rep(names(x), x), collapse=" ")
-  })
-  ti_list <- strsplit(dtm2list, "[ ]")
-  names(ti_list) <- df$PID
-  ti_df <- data.frame('PID'= rep(names(ti_list), sapply(ti_list, length)),
-                       'TI' =  unlist(ti_list),
-                       stringsAsFactors=F)
-  couple_df <- inner_join(ti_df, ti_df, by = 'TI') %>%
-    filter(PID.x > PID.y) %>%
-    group_by(PID.x, PID.y) %>%
-    summarise(count = n()) %>%
-    left_join(df[,c('PID', 'title')], by = c('PID.x' = 'PID'))%>%
-    left_join(df[,c('PID', 'title')], by = c('PID.y' = 'PID'))%>%   ### up to here
-    mutate(NR.x = str_count(TI.x, " "),
-           NR.y = str_count(TI.y, " "),
-           w_ij = count/sqrt(NR.x * NR.y)) %>%
-    select(UT.x, UT.y, w_ij)
-  couple_df$w_ij[couple_df$w_ij == Inf] <- 0
-  couple_df_tic <- filter(couple_df, w_ij != 0)
-  
-  # Abstract coupling ---------------------------- this and below needs to be modified still. need to include ngrams in this process
-  documents <- tolower(dfsci$TI)
-  documents <- tm::VCorpus(tm::VectorSource(documents))
-  documents <- tm::tm_map(documents, tm::removePunctuation)
-  documents <- tm::tm_map(documents, tm::removeNumbers)
-  meaningless_word <- c(tm::stopwords("english"), 'use', 'used', 'using', 'uses',
-                        'new', 'effect', 'effects', 'affect', 'affects', 'impact',
-                        'impacts', 'implication', 'implications', 'potential',
-                        'influence', 'influences', 'influenced', 'study', '-',
-                        'data', 'can', 'results', 'different', 'similar', 'also',
-                        'c', 'may', 'based', 'important', 'within','however',
-                        'found', 'analysis', 'changes', 'among', 'large',
-                        'number', 'higher', 'well', 'studies', 'total',
-                        'increased', 'increases', 'elsevier', 'level', 'many',
-                        'rights', 'present', 'will', 'low', 'across', 'showed',
-                        'associated', 'approach', 'related', 'provide', 'including',
-                        'increase')
-  documents <- tm::tm_map(documents, tm::removeWords, meaningless_word)
-  myTdm <- tm::DocumentTermMatrix(documents)
-  myTdm2 <- tm::removeSparseTerms(myTdm, sparse = 0.99)
-  dtm2list <- apply(myTdm2, 1, function(x) {
-    paste(rep(names(x), x), collapse=" ")
-  })
-  TI_list <- strsplit(dtm2list, "[ ]")
-  names(TI_list) <- dfsci$UT
-  tiutdf <- data.frame('UT'= rep(names(TI_list), sapply(TI_list, length)),
-                       'TI' =  unlist(TI_list),
-                       stringsAsFactors=F)
-  couple_df <- inner_join(tiutdf, tiutdf, by = 'TI') %>%
-    filter(UT.x > UT.y) %>%
-    group_by(UT.x, UT.y) %>%
-    summarise(count = n()) %>%
-    left_join(dfsci[,c('UT', 'TI')], by = c('UT.x' = 'UT'))%>%
-    left_join(dfsci[,c('UT', 'TI')], by = c('UT.y' = 'UT'))%>%
-    mutate(NR.x = str_count(TI.x, " "),
-           NR.y = str_count(TI.y, " "),
-           w_ij = count/sqrt(NR.x * NR.y)) %>%
-    select(UT.x, UT.y, w_ij)
-  couple_df$w_ij[couple_df$w_ij == Inf] <- 0
-  couple_df_tic <- filter(couple_df, w_ij != 0)
-  
-  # JOC ------------------------------------------------------ here the journals came from the cited references. 
-  cr_list <- strsplit(dfsci$CR, split="; ")
-  names(cr_list) <- dfsci$UT
-  crutdf <- data.frame('UT'= rep(names(cr_list), sapply(cr_list, length)),
-                       'CR' = toupper(unlist(cr_list)),
-                       stringsAsFactors=F)
-  rm(cr_list)
-  tmp <- left_join(crutdf, splitted_cr, by = c('CR' = 'record')) %>%
-    select(UT, journal) %>%
-    group_by(UT, journal) %>%
-    summarise(jo_freq = n()) %>%
-    filter(!is.na(journal))
-  couple_df <- inner_join(tmp, tmp, by = 'journal') %>%
-    filter(UT.x > UT.y) %>%
-    mutate(min_jo = min(jo_freq.x, jo_freq.y)) %>%
-    select(UT.x, UT.y, min_jo) %>%
-    group_by(UT.x, UT.y) %>%
-    summarise(count = sum(min_jo)) %>%
-    left_join(dfsci[,c('UT', 'NR')], by = c('UT.x' = 'UT'))%>%
-    left_join(dfsci[,c('UT', 'NR')], by = c('UT.y' = 'UT'))%>%
-    mutate(w_ij = count/sqrt(NR.x * NR.y)) %>%
-    select(UT.x, UT.y, w_ij)
-  rm(tmp)
-  gc()  # It can be useful to call gc after a large object has been removed, as this may prompt R to return memory to the operating system.
-  couple_df$w_ij[couple_df$w_ij == Inf] <- 0
-  couple_df_joc <- filter(couple_df, w_ij != 0)
-  
-  # author coupling --------------------------------------------------- need to modify this 
-  cr_list <- strsplit(dfsci$CR, split="; ")
-  names(cr_list) <- dfsci$UT
-  crutdf <- data.frame('UT'= rep(names(cr_list), sapply(cr_list, length)),
-                       'CR' = toupper(unlist(cr_list)),
-                       stringsAsFactors=F)
-  rm(cr_list)
-  tmp <- left_join(crutdf, splitted_cr, by = c('CR' = 'record')) %>%
-    select(UT, journal) %>%
-    group_by(UT, journal) %>%
-    summarise(jo_freq = n()) %>%
-    filter(!is.na(journal))
-  couple_df <- inner_join(tmp, tmp, by = 'journal') %>%
-    filter(UT.x > UT.y) %>%
-    mutate(min_jo = min(jo_freq.x, jo_freq.y)) %>%
-    select(UT.x, UT.y, min_jo) %>%
-    group_by(UT.x, UT.y) %>%
-    summarise(count = sum(min_jo)) %>%
-    left_join(dfsci[,c('UT', 'NR')], by = c('UT.x' = 'UT'))%>%
-    left_join(dfsci[,c('UT', 'NR')], by = c('UT.y' = 'UT'))%>%
-    mutate(w_ij = count/sqrt(NR.x * NR.y)) %>%
-    select(UT.x, UT.y, w_ij)
-  rm(tmp)
-  gc()  # It can be useful to call gc after a large object has been removed, as this may prompt R to return memory to the operating system.
-  couple_df$w_ij[couple_df$w_ij == Inf] <- 0
-  couple_df_joc <- filter(couple_df, w_ij != 0)
-  
-  # Join kec, tic and bic, joc ---------------------------------------------
-  couple_df <- full_join(ungroup(couple_df_bic), ungroup(couple_df_kec), by = c('UT.x', 'UT.y'), suffix = c(".bic", ".kec")) %>%
-    full_join(ungroup(couple_df_tic), by = c('UT.x', 'UT.y'), suffix = c('', '.tic')) %>%
-    full_join(ungroup(couple_df_joc), by = c('UT.x', 'UT.y'), suffix = c('', '.joc'))
-  couple_df$w_ij.bic[is.na(couple_df$w_ij.bic)] <- 0
-  couple_df$w_ij.kec[is.na(couple_df$w_ij.kec)] <- 0
-  couple_df$w_ij[is.na(couple_df$w_ij)] <- 0
-  couple_df$w_ij.joc[is.na(couple_df$w_ij.joc)] <- 0
-  couple_df <- mutate(couple_df,
-                      w_ij = 2 * w_ij.bic + w_ij.kec + w_ij + 0.5 * w_ij.joc) %>%
-    select(UT.x, UT.y, w_ij)
-  # Keep going normally
+  # and create the graph
   m <- sum(couple_df$w_ij)
-  coup2 <- data.frame(wos_id = c(as.vector(couple_df$UT.x), as.vector(couple_df$UT.y)),
+  coup2 <- data.frame(PID = c(as.vector(couple_df$PID.x), as.vector(couple_df$PID.y)),
                       w_ij = rep(couple_df$w_ij,2))
   k_i <- coup2 %>%
-    group_by(wos_id) %>%
+    group_by(PID) %>%
     summarise(k_i = sum(w_ij))
   rm(coup2)
-  nam <- as.character(k_i$wos_id)
+  nam <- as.character(k_i$PID)
   k_i <- k_i$k_i
   names(k_i) <- nam
   couple_df <- couple_df %>%
-    mutate(asso_stre = (2* w_ij * m)/ (k_i[UT.x] * k_i[UT.y]))
+    mutate(asso_stre = (2* w_ij * m)/ (k_i[PID.x] * k_i[PID.y]))
   rm(k_i)
-  names(couple_df) <- c("rec1",
-                        "rec2",
+  names(couple_df) <- c("PID1",
+                        "PID2",
                         "bc",
                         "weight"
   )
   couple_df <- ungroup(couple_df)
-  tmp <- dfsci$UT[which(!(dfsci$UT %in% unique(c(couple_df$rec2, couple_df$rec1))))]
+  tmp <- df$PID[which(!(df$PID %in% unique(c(couple_df$PID2, couple_df$PID1))))]
   if(length(tmp) >= 1){
-    missing_df <- data.frame('rec1' = dfsci$UT[which(!(dfsci$UT %in% unique(c(couple_df$rec2, couple_df$rec1))))],
-                             'rec2' = dfsci$UT[1],
+    missing_df <- data.frame('PID1' = df$PID[which(!(df$PID %in% unique(c(couple_df$PID2, couple_df$PID1))))],
+                             'PID2' = df$PID[1],
                              'bc' = 0,
                              'weight' = 0,
                              stringsAsFactors = F)
@@ -1002,114 +978,449 @@ scimeetr_coupling <- function(df,
   }
   graph <- igraph::graph_from_data_frame(d=couple_df, directed= F)
   
-}
+
 return(graph)
 }
 
+# apply the function
+graph_DB1 <- scimeetr_coupling(DB1)
 
+# save this so we don't need to create it again
+saveRDS(graph_DB1, "flashLIT_graph_DB1.RDS")
+# graph_DB1 <- readRDS("flashLIT_graph_DB1.RDS")
 
-
-
-
-
-
-
-
-## OLD CODE ---------------------------------------------------------------------------
-# Make the groups -----------------------------
-# we do this with the native scimeetr object 
-# coupling by 'bickecticauc' might be better, but here we go fast
-# if we can split manually, then we might want to consider parallel
-
-### with scimeetr, the output includes nested groups, named with a "_" for each split level. 
-### we can just keep splitting until the number of groups with the maximum "_" in their names (ie the last split level) is 
-### equal to our group target. for other topic model options and revtools, this might need more processing. 
-
-#' group summary of a (scimeetr) object 
-#'
-#' @param .x a scimeetr object
-#'
-#' @return a tibble with group names, level (of splitting), and size of each group.
-#' @export
-#'
-#' @examples
-grSummary <- function(.x, kw = FALSE){
-  df <- tibble(
-    grNames = names(.x),
-    grLevel = names(.x) %>% stringr::str_count(pattern = "_"),
-    grSize = map_dbl(.x, ~nrow(.x$dfsci))
-  )
-  if(kw) df <- df %>% 
-      add_column(grTag = map(.x, ~.x$tag),
-                 grKeywords = map(.x, ~.x$kw),
-                 grTitle = map(.x, ~.x$ti),
-                 grAbstract = map(.x, ~.x$ab))
-  return(df)
+# and then categorise this graph using graph methods
+# the wrapper direct from scimeetr:
+clusterize <- function(graph = graph, community_algorithm = 'louvain'){
+  if(community_algorithm == 'louvain'){
+    community <- igraph::cluster_louvain(graph)
+  } else if(community_algorithm == 'fast greedy'){
+    community <- igraph::cluster_fast_greedy(graph)
+  }
+  return(community)
 }
 
-#' iterative split of a scimeetr object into groups
-#' 
-#' will iteratively apply scimeetr::scimap to a scimeetr object until the stopping rules are satisfied.
-#' rules are specified as both groupsize AND number of groups need to reach targets, or the end is triggered by 
-#' a timeout.
-#'
-#' @param x a scimeetr object (can already be split)
-#' @param coupling style of coupling. see ?scimeetr::scimap.
-#' @param grouptarget number of groups desirable
-#' @param mingroupsize minimum size of the groups
-#' @param maxgroupsize maximum desired size of the groups
-#' @param timeout maximum time (minutes) to iterate for
-#'
-#' @return
-#' @export
-#'
-#' @examples
-scimap_iterative  <- function(x, coupling = 'bickec', 
-                              grouptarget = 20, mingroupsize = 5, maxgroupsize = 30,
-                              timeout = 5){
-  timeStart <- Sys.time()
-  timeElapsed <- 0
-  grSum <- grSummary(x)
-  ngroups <- grSum %>% filter(grLevel == max(grLevel)) %>% nrow()
-  maxGrSize <- grSum %>% filter(grLevel == max(grLevel)) %>% pull(grSize) %>% max
+# clustering once/twice would be:
+# # apply the function using the default louvain method (https://igraph.org/r/doc/cluster_louvain.html) and return a vector of group membership
+# cl1 <- clusterize(graph = coupled_DB) %>% igraph::membership()
+# CL1 <- tibble(
+#   PID = names(cl1),
+#   cl1 = as.character(cl1)
+# )
+# 
+# # how many in each group?
+# table(CL1$cl1)
+# 
+# #subset the graph according to these memberships, before splitting again
+# CL2 <- map_dfr(unique(CL1$cl1), function(x){
+#   vpids <- CL1 %>% filter(cl1 == x) %>% pull(PID)
+#   sg <- igraph::induced_subgraph(graph = coupled_DB, vids = vpids, impl = "auto")
+#   cl2 <- clusterize(graph = sg) %>% igraph::membership() 
+#   CL2 <- tibble(
+#     PID = names(cl2),
+#     cl2 = paste(x, cl2, sep = "_"))
+#   CL2
+# })
+
+# but we need to iterate this:
+# the graph object to cluster
+# maximum group size. if groups are already smaller than this, clustering will not continue on them
+# the cluster algorithm
+iteratively_cluster <- function(graph,            
+                                maxgroupsize = igraph::gorder(graph)/20,  
+                                community_algorithm = 'louvain'           
+                                ){
   
-  while((ngroups  < grouptarget | maxGrSize > maxgroupsize) & !(timeElapsed > timeout)){
+  # initiate the first cluster and determine current groups
+    clg <- clusterize(graph = graph) %>% igraph::membership()
+    cl <- tibble(PID = names(clg),
+                 clg = as.character(clg))
+    clbase <- cl
     
-    x <- scimeetr::scimap(x, coupling_by = coupling, min_com_size = mingroupsize)
+  # determine how many in the groups, and therefore whether to cluster them further (if still above maxgroupsize). 
+    gtb <- table(cl$clg)
+    to_split <- gtb[gtb > maxgroupsize] %>% names()
+    no_split <- gtb[gtb <= maxgroupsize] %>% names()
+    if(length(to_split) == 0){stop("All clusters already smaller than maxgroupsize.")}
     
-    grSum <- grSummary(x)
-    ngroups <- grSum %>% filter(grLevel == max(grLevel)) %>% nrow()
-    maxGrSize <- grSum %>% filter(grLevel == max(grLevel)) %>% pull(grSize) %>% max
-    timeElapsed <- difftime(Sys.time(), timeStart, units = "mins")
+  while(length(to_split) > 0){
+    
+    # map over these, subset the graph, calculate the clusters, and append to the cluster object
+    clsplit <- map_dfr(to_split, function(x){
+      vpids <- cl %>% filter(clg == x) %>% pull(PID)
+      sg <- igraph::induced_subgraph(graph = graph, vids = vpids, impl = "auto")
+      clg <- clusterize(graph = sg) %>% igraph::membership() 
+      clsplit <- tibble(
+        PID = names(clg),
+        clg = paste(x, clg, sep = "_"))
+      clsplit
+    })
+    
+  # for the non-split groups, add these directly with a zero group
+    clns <- cl %>% 
+      filter(clg %in% no_split) %>% 
+      mutate(clg = paste(clg, 0, sep = "_"))
+    
+  # join together, add to original, and count the number of groups to determine if the split needs to be continued
+    clnew <- bind_rows(clsplit, clns) 
+    
+    clbase <- clbase %>% full_join(clnew, by = "PID")
+    
+    cl <- clnew
+    gtb <- table(cl$clg)
+    to_split <- gtb[gtb > maxgroupsize] %>% names()
+    no_split <- gtb[gtb <= maxgroupsize] %>% names()
+  }  
+  
+  # then rename all the clbase columns
+    names(clbase)[-1] <- paste("cl", 1:(length(clbase)-1), sep = "_")
+    return(clbase)
+}
+
+coms_DB1 <- iteratively_cluster(graph_DB1, 50)
+
+saveRDS(coms_DB1, "flashLIT_coms_DB1.RDS")
+
+## then need to consider what to do for any groups that are below a minimum size. These are valid - but we may need to account for them in the summary
+
+
+# group summaries =======================================================================
+# given a group and a dataframe (and for some summaries, a graph object)
+# most of these can come as 'within group' (i.e. in terms of the papers within the group) or as externally figured (e.g. number of citations in WoS+)
+# in our case, we really want to characterise the groups so we focus on the within group measures
+
+# CITATIONS
+# papers most cited in all wos sources - slice_max(n_cited_allwos, year2)
+# papers most cited in all wos sources (age residuals) - slice_max(n_cited_allwos_resid, year2)
+# papers most cited within group - frequency of occurence in citedPID_list * also version of this age-residuals
+# papers citing most others within the group - sum of group's occurence in citedPID_list (likely review paper)
+# AUTHORS
+# authors most frequently occuring within group - calculate from unlisted author list
+# most frequent authors' top cited papers within groups
+# KEYTERMS
+# top keyterms (from (optionally) keywords, keywords plus, titles and abstracts)
+# JOURNALS
+# journals most common
+# cited journals most common in group
+
+# we possibly also want to generate some group metrics
+# are the groups well-connected or?
+# these might be useful in determining our confidence in allocating rogue papers. 
+# but we might not do that here just yet.
+
+# non group-specific frequencies required
+# age-based residuals
+# scimeetr used a gam with k of 10, we copy this
+
+age_based_residuals <- function(df, .ycol, .xcol = "age", .k = 10){
+  y <- df[.ycol] %>% pull()
+  x <- df[.xcol] %>% pull()
+  z <- mgcv::gam(y ~ s(x, k=.k), family = "poisson")$residuals
+  y[!is.na(y)] <- z
+  return(y)
+}
+
+DB1 <- DB1 %>% 
+  add_column(n_cited_allwos_resid = age_based_residuals(DB1, "n_cited_allwos"))
+
+# visual check of what this is doing
+# ggplot(DB1) + 
+#   geom_point(aes(x=age, y = n_cited_allwos, color = n_cited_allwos_resid), pch = 16) +
+#   geom_line(aes(x=age, y = mgcv::gam(n_cited_allwos ~ s(age, k=10), data = DB1, family = "poisson")$fitted.values), color = 'red') +
+#   scale_color_viridis_c()
+
+# a function to give a contensed version of the reference for use in the summaries
+# Author1, Year, Title, Journal
+
+  add_ref <- function(df, doi = FALSE){
+  df %>% 
+    mutate(ref = pmap_chr(list(df$author_list, df$year, df$title_orig, df$journal_iso, df$doi),
+             function(au, yr, ti, jo, di){
+              if(length(au)>1) au <- paste(au[[1]], "et al.", sep = ", ") 
+              x <- paste(au[[1]], yr, ti, jo, sep = ", ")
+              if(.doi) x <- paste(x, di, sep = ", ")
+              x
+             }))
+}
+
+# function to add these groupspecific frequencies to the data - modified from scimeetr
+# input is the group dataset, ie. only the group.
+
+  # most cited within group (i.e. by the group)
+  add_group_most_cited <- function(df,...){  
+    ncites <- df %>% 
+      pull(citedPID_list) %>% 
+      unlist() %>% 
+      as_tibble() %>% 
+      rename(PID = value) %>% 
+      group_by(PID) %>% 
+      summarise(cites_within_group=n())
+    df %>% 
+      left_join(ncites, by = "PID")
   }
-  attr(x,'STATUS') <- c(ngroups = ngroups, maxGrSize = maxGrSize, timeElapsed = timeElapsed)
-  return(x)
-}  
+    
+  # cites highest number of group papers 
+  # need to filter out the within group pids from the list of cited pids and then count them
+  add_group_cites_most_group <- function(df,...){
+  df %>% 
+    mutate(cites_of_group = map_dbl(citedPID_list, function(x) sum(x %in% df$PID)))
+}
+  
+  # papers by most frequent authors within group - sum of author frequency within group
+  # NOTE this is NOT scaled by the number of authors on a paper. We tentatively think it is more representative of the key papers this way.
+  add_most_freq_author_papers <- function(df,...){  
+    nauthor <- df %>% 
+      pull(author_list) %>% 
+      unlist() %>% 
+      as_tibble() %>% 
+      rename(authori = value) %>% 
+      group_by(authori) %>% 
+      summarise(authorfreq_within_group=n())
+    df %>% 
+      mutate(sum_author_freq = map_dbl(author_list, function(x) nauthor %>% filter(authori %in% x) %>% pull(authorfreq_within_group) %>% sum()))
+  } 
 
-sciGroups <- scimap_iterative(scimeetr_list)  ## takes ~4 minuites for this data
-attr(sciGroups,'STATUS') 
+  # graph methods
+  # lots of possible measures https://igraph.org/c/doc/igraph-Structural.html#centrality-measures
+  # we focus on closeness (inverse shortest path to all other verticies in the graph)
+  # this is most representative in terms of keywords, and most citing/cited by in terms of the references.
+  # see other interpretations in scimeetr
+  # these are somewhat slow for large graphs so we restrict our analysis to few of these measures.
+  add_group_closeness <- function(df, graph, ...){  
+  graphi <-igraph::induced_subgraph(graph = graph, vids = df$PID, impl = "auto")
+  close_score <- tibble(
+    PID = igraph::V(graphi)$name,
+    close_score = igraph::closeness(graphi, mode = "all", normalized = T)
+  )
+  df %>% 
+    left_join(close_score, by = "PID")
+}
 
-grSummary(sciGroups)
-grSummary(sciGroups) %>% pull(grLevel) %>% max() ## goes up to 4 levels deep
-grSummary(sciGroups) %>% filter(grLevel==4) %>% pull(grSize) %>% hist()
+# then function to give group summaries (individual functions, then summarise into one)
 
-# From here, we may want to look at the keywords that define the groups (tags), by group level to help inform some of the terms
-# note the full keyword, title, and abstract are the frequency of terms in these. We will use these next, in the terms
+# GRAPH CENTRALITY
+  # papers with high closeness
+  papers_high_centrality <- function(df, np=5, graph){
+    df %>% 
+      add_group_closeness(graph = graph) %>% 
+      arrange(-close_score, age) %>% 
+      slice_head(n = np) %>% 
+      add_ref() %>% 
+      select(PID, ref, doi)
+  }
 
-sciSum <- grSummary(sciGroups, kw = TRUE)
+  # CITATIONS
+  # papers most cited in all wos sources - slice_max(n_cited_allwos, age)
+  papers_most_cited_all <- function(df, np=5,...){
+    df %>% 
+      arrange(-n_cited_allwos, age) %>% 
+      slice_head(n = np) %>% 
+      add_ref() %>% 
+      select(PID, ref, doi)
+  }
+  # papers most cited in all wos sources (age residuals) 
+  papers_most_cited_all_resid <- function(df, np=5,...){
+    df %>% 
+      arrange(-n_cited_allwos_resid, age) %>% 
+      slice_head(n = np) %>% 
+      add_ref() %>% 
+      select(PID, ref, doi)
+  }
+  # papers most cited within group - frequency of occurence in citedPID_list 
+  papers_most_cited_within_group <- function(df, np=5,...){
+    df %>% 
+      add_group_most_cited() %>% 
+      arrange(-cites_within_group, age) %>% 
+      slice_head(n = np) %>% 
+      add_ref() %>% 
+      select(PID, ref, doi)
+  }
+  # papers most cited within group (age-residuals)
+  papers_most_cited_within_group_resid <- function(df, np=5, .k=min(round(nrow(df)/10), 10), ...){
+    df2 <- df %>% add_group_most_cited()
+    df %>% 
+      add_column(n_cited_within_resid = age_based_residuals(df2, .ycol = "cites_within_group", .k = .k)) %>% 
+      arrange(-n_cited_within_resid, age) %>% 
+      slice_head(n = np) %>% 
+      add_ref() %>% 
+      select(PID, ref, doi)  
+  }
+  # papers citing most others within the group - sum of group's occurence in citedPID_list (likely review paper)
+  papers_citing_most_within_group <- function(df, np=5,...){
+    df %>% 
+      add_group_cites_most_group() %>% 
+      arrange(-cites_of_group, age) %>% 
+      slice_head(n = np) %>% 
+      add_ref() %>% 
+      select(PID, ref, doi)
+  }
+  # AUTHORS
+  # authors most frequently occuring within group - calculate from unlisted author list
+  authors_most_frequent <- function(df, np=5, ma=5, mn=3, ...){
+    df %>% 
+      pull(author_list) %>% 
+      unlist() %>% 
+      as_tibble() %>% 
+      rename(author1 = value) %>% 
+      group_by(author1) %>% 
+      summarise(freq=n()) %>% 
+      slice_max(freq, n=ma) %>% 
+    # most frequent authors' top cited papers within groups
+      mutate(authors_top_papers = map(author1, function(a1){
+        df %>% 
+          add_group_most_cited() %>% 
+          filter(map_lgl(author_list, ~(a1 %in% .x))) %>% 
+          arrange(-cites_within_group, age) %>% 
+          slice_head(n = mn) %>% 
+          add_ref() %>% 
+          select(PID, ref, doi)
+      })) %>% 
+      unnest(authors_top_papers)
+  }
 
-sciSum %>% 
-  select(grNames:grTag) %>% 
-  filter(grLevel <3) %>% 
-  unnest_wider(grTag)
+  # KEYTERMS
+  # top keyterms (from (optionally) keywords, keywords plus, titles and abstracts)
+  top_keywords <- function(df, nk= 15){
+    df %>% 
+      pull(keywords) %>% 
+      strsplit("[;][ ]") %>% 
+      unlist() %>% 
+      as_tibble() %>% 
+      rename(keywords = value) %>% 
+      group_by(keywords) %>% 
+      summarise(freq=n()) %>% 
+      slice_max(freq, n=nk)
+  }
+  top_keywords_plus <- function(df, nk= 15){
+    df %>% 
+      pull(keywords_plus) %>% 
+      strsplit("[;][ ]") %>% 
+      unlist() %>% 
+      as_tibble() %>% 
+      rename(keywords_plus = value) %>% 
+      group_by(keywords_plus) %>% 
+      summarise(freq=n()) %>% 
+      slice_max(freq, n=nk)
+  }
+  top_title_words <- function(df, nk= 15){
+    df %>% 
+      pull(title) %>% 
+      strsplit("[ ]") %>% 
+      unlist() %>% 
+      as_tibble() %>% 
+      rename(title_words = value) %>% 
+      group_by(title_words) %>% 
+      summarise(freq=n()) %>% 
+      slice_max(freq, n=nk)
+  }
+  top_abstract_words <- function(df, nk = 15){
+    df %>% 
+      pull(abstract) %>% 
+      strsplit("[ ]") %>% 
+      unlist() %>% 
+      as_tibble() %>% 
+      rename(abstract_words = value) %>% 
+      group_by(abstract_words) %>% 
+      summarise(freq=n()) %>% 
+      slice_max(freq, n=nk)
+  }
+  
+  # could add bigrams there...
+  
+  # JOURNALS
+  # journals most common
+  journals_most_common <- function(df, nj = 5){
+    df %>%
+      select(journal_iso) %>% 
+      group_by(journal_iso) %>% 
+      summarise(freq=n()) %>% 
+      slice_max(freq, n=nj)
+  }
+  
+  # cited journals most common in group
+  journals_most_commonly_cited <- function(df, nj = 5){
+    df %>% 
+      pull(cited_references_list) %>% 
+      unlist() %>% 
+      strsplit(", ") %>% 
+      map_chr(~.x[3]) %>% 
+      as_tibble() %>% 
+      rename(journal_cited = value) %>% 
+      group_by(journal_cited) %>% 
+      summarise(freq=n()) %>% 
+      slice_max(freq, n=nj)
+  }
+  
 
-sciSum %>% 
-  filter(grLevel >3) %>% 
-  unnest(grTag) %>% 
-  pull(grTag) %>% 
-  table()
+# apply -----
+  
+# now, for each community group level, including the whole DB, we need to map over the group summaries
 
-# Term document matrices  -----------------------------
+coms_summaries <- coms_DB1 %>% 
+  #add_column(cl_0 = as.character(0), .before = 2) %>% 
+  pivot_longer(cols = cl_0:cl_4, names_to = "group_level", values_to = "group_id") %>% 
+  group_by(group_id) %>% 
+  nest(group_PIDs = c(PID)) %>% 
+  mutate(n = map_int(group_PIDs, nrow))
+
+# apply group summary functions - this can take some time if including group centrality  
+coms_summaries <- coms_summaries %>% 
+   mutate(group_top_keywords = map(group_PIDs, function(x){
+     .df <- DB1 %>% filter(PID %in% pull(x)) 
+     list(
+        top_keywords = top_keywords(.df),
+        top_keywords_plus = top_keywords_plus(.df),
+        top_title_words = top_title_words(.df),
+        top_abstract_words = top_abstract_words(.df)
+       )
+     }
+     )) 
+
+coms_summaries <- coms_summaries %>% 
+    mutate(group_top_journals = map(group_PIDs, function(x){
+    .df <- DB1 %>% filter(PID %in% pull(x)) 
+    list(
+      journals_most_common = journals_most_common(.df),
+      journals_most_commonly_cited = journals_most_commonly_cited(.df)
+    )
+  }
+  )) 
+
+coms_summaries <- coms_summaries %>% 
+  mutate(group_top_papers = map(group_PIDs, function(x){
+    .df <- DB1 %>% filter(PID %in% pull(x)) 
+    list(
+      papers_high_centrality = tryCatch(papers_high_centrality(.df, graph = graph_DB1), error = function(e) e),
+      papers_most_cited_all = tryCatch(papers_most_cited_all(.df), error = function(e) e),
+      papers_most_cited_within_group = tryCatch(papers_most_cited_within_group(.df), error = function(e) e),
+      papers_citing_most_within_group = tryCatch(papers_citing_most_within_group(.df), error = function(e) e),
+      authors_most_frequent = tryCatch(authors_most_frequent(.df), error = function(e) e)
+    )
+  }
+  )) 
+
+
+# these models sometimes fail, so we do them seperately with cautions for errors
+coms_summaries <- coms_summaries %>% 
+  mutate(group_top_papers_resid = map(group_PIDs, function(x){
+    if (nrow(x)>30){
+      .df <- DB1 %>% filter(PID %in% pull(x)) 
+    list(
+      papers_most_cited_all_resid = tryCatch(ifelse(nrow(x)>30, papers_most_cited_all_resid(.df), NA), error = function(e) e),
+      papers_most_cited_within_group_resid = tryCatch(ifelse(nrow(x)>30, papers_most_cited_within_group_resid(.df), NA), error = function(e) e)
+    )
+    } else {
+      list("Fewer than 30 documents, summary model not completed")
+    }
+  }
+  )) 
+
+saveRDS(coms_summaries, "flashLIT_coms_DB1_summmaries.RDS")  
+
+
+# =================================================================================
+# Term document matrices  ==========================================================
+# =================================================================================
 
 # the second component we need is a list of themes, nodes, and associated terms
 # here we develop this really simply, first, for terms that should split the 4 pathways, i.e. terms UNIQUE to these pathways
@@ -1174,3 +1485,6 @@ inspect(DocumentTermMatrix(reuters, list(dictionary = c("prices", "crude", "oil"
 # Node and theme characteristics	--- (created from the above, used for queries)								
 # NID	number of papers, reading lists (scimeetr), number of likely review papers.								
 # Theme	number of papers, reading lists (scimeetr), number of likely review papers.		
+
+
+
