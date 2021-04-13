@@ -20,6 +20,9 @@
 # RStudio files
 .Rproj.user/
 
+# large output files (> 100MB wil trigger git error)
+data/*.RDS
+
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf

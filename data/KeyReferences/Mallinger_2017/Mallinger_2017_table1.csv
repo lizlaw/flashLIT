@@ -1,0 +1,79 @@
+Reference,Managed bee species (* indicates exotic range),Wild bee species,Location,Context,Managed bee metric (independent variable),Explanatory mechanism variable,Wild bee metric (dependent variable),Reported effect
+Abe et al. 2010,Apis mellifera*,Xylocopa Ogasawarensis & endemic small bees,Asia (Japan),field (natural),honey bee presence/ absence and/or abundance,none,distribution,0
+Aizen & Feinsinger 1994,A. mellifera*,many,South America (Argentina),field (natural),visitation rates,none (different responses to forest fragmentation speculated),visitation rates,-
+Aizen et al. 2011,Bombus ruder-atus*,Bombus dahlbomii,South America (Argentina),field (natural),"foraging behavior (floral preferences, nectar removal), visitation rates",nectar availability,"foraging behavior (floral preferences, nectar removal), visitation rates",0
+Badano & Vergara 2011,A.mellifera*,many,North America (Mexico),field (agricultural),abundance,none,diversity,-
+Balfour et al. 2013,A.mellifera,"Bombus terrestris/ lucorum, Bombus pascuorum, Bombus lapidarius",Europe (UK),field (experiment plots),"visitation rates, foraging behavior (handling times, number of floral probes)",tongue length,"visitation rates, foraging behavior (handling time, number of floral probes)",0
+Balfour et al. 2015,A.mellifera,Bombus spp.,Europe (UK),field (experiment plots),"visitation rates, foraging behavior (search time, extraction time, etc.)","nectar volume & sugar concentration, energetic returns per flower","visitation rates, foraging behavior (search time, extraction time, etc.)",0
+Batra 1999,A. mellifera*,many,North America (USA),field (semi- natural),visitation rates,none,visitation rates,0
+Cane & Tepedino 2017,A. mellifera*,many (average-sized solitary bees),North America (USA),lab,amount of pollen collected per colony,none,amount of pollen needed to produce one offspring,-
+Carneiro & Martins 2012,A. mellifera scutellata*,many,South America (Brazil),field (natural),visitation rates,pollen depletion,visitation rates,-
+Connor & Neumeier 1995,A. mellifera*,many,North America (USA),field (natural),visitation rates,none,visitation rates,-
+Dohzono et al. 2008,B. terrestris*,"Bombus ardens, Bombus hypocrita",Asia (Japan),field (natural),presence/ absence,nectar robbing & collection,visitation rates,-
+Dupont et al. 2004,A. mellifera*,"Anthophora alluaudi, Eucera gracilipes",Canary Islands,field (natural),abundance,nectar depletion,visitation rates,-
+El Shafie et al. 2002,Apis florea*,A. mellifera sudanensis,Africa (Sudan),field (agricultural),"foraging behavior (types of pollen collected), visitation rates",none (niche partitioning implied),"foraging behavior (type of pollen collected), visitation rates",0
+Elbgami et al. 2014,A. mellifera*,1 B. terrestris,Europe (UK),field (agricultural),distance from apiary,none,individual bee weight & reproductive success,-
+Esterio et al. 2013,B. terrestris*,B. dahlbomii,South America (Chile),field (natural),"visitation rates, foraging behavior (number of pollen grains carried & deposited)",none,"visitation rates, foraging behavior (number of pollen grains carried & deposited)",0
+Forup & Memmot 2005,A. mellifera,Bombus spp.,Europe (UK),field (natural),"abundance, foraging behavior (diet breadth)",tongue length,"abundance, diversity, foraging behavior (diet breadth)",-/0
+Franco et al. 2009,A. mellifera*,Bombus atratus,South America (Brazil),field (natural),"foraging behavior (plant use, diet breadth)",niche overlap,"foraging behavior (plant use, diet breadth)",-/0
+Ginsberg 1983,A. mellifera*,many,North America (USA),field (semi- natural),foraging behavior (plant preferences & foraging period),niche overlap,foraging behavior (plant preferences & foraging period),-/0
+Goras et al. 2016,A. mellifera,many,Europe (Greece),field (natural),hive density,none,"visitation rates, foraging behavior (visit duration)",0
+Goulson & Sparrow 2009,A. mellifera,"B. pascuorum, B. lucorum, B. lapidarius, B. terrestris",Europe (UK),field (semi- natural),presence/ absence,none,thorax width,-
+Goulson et al. 2002,"A. mellifera*, Bombus terrestris*",many,Australia,"field (natural, semi-natural, & developed)",presence/ absence,niche overlap,"abundance, diversity, & foraging behavior (floral preference)",-/0
+Gross 2001,A. mellifera*,many,Australia,field (natural),"abundance, visitation rates",none,"abundance, visitation rates",-
+Gross & Mackay 1998,A. mellifera*,many,Australia,field (natural),visitation rates,direct displacement interactions,visitation rates,-
+Herbertsson et al 2016,A. mellifera,Bombus spp.,Europe (Sweden),field (agricultural),presence/ absence,"tongue length, thorax width",density,-/0
+Hingston & McQuilan 1998,B. terrestris*,many,Australia,field (natural),foraging behavior (diet breadth),niche overlap,foraging behavior (diet breadth),-
+Hingston & McQuilan 1999,B. terrestris*,Chalicodoma spp.,Australia,field (natural),presence/ absence,none (nectar availability implied),"visitation rates, foraging behavior (foraging time)",-
+Holmes 1964,A. mellifera*,Bombus spp.,North America (USA),field (developed),visitation rates,none,visitation rates,-
+Horskins & Turner 1999,A. mellifera*,many,Australia,field (natural),"foraging behavior (temporal foraging patterns, stigma contact, nectar vs. pollen collecting trips)",nectar availability,"foraging behavior (temporal foraging patterns, stigma contact, nectar vs. pollen collecting trips)",0
+Hudewenz & Klein 2013,A. mellifera,many,Europe (Germany),field (natural),"distance to hive, presence/ absence",none,"visitation rates, number of nests",-
+Hudewenz & Klein 2015,A. mellifera,Osmia bicornis,Europe (Germany),field (experiment plots),abundance,"interspecific displacement, visitation rates, niche breadth & overlap",number of nests & brood cells,-
+Inari et al. 2005,B. terrestris*,B. ardens,Asia (Japan),field (agricultural & semi- natural),"abundance, distance from greenhouse",none,abundance,-
+Ings et al. 2006,B. terrestris dalmatinus*,B. terrestris audax,Europe (UK),field (natural),"foraging behavior, visitation rates, production of new queens & males",none,"foraging behavior, visitation rates, production of new queens & males",-
+Inoue & Yokoyama 2010,B. terrestris*,"B. hypocrita sapporoensis, Bombus schrencki albidopleuralis, Bombus pseudobaicalensis, Bombus diversus tersatus",Asia (Japan),field (natural),"foraging behavior (diet breadth), reproductive capacity, temporal changes in abundance",niche overlap,"temporal changes in abundance, foraging behavior (diet breadth)",-
+Inoue et al. 2010,B. terrestris*,Bombus ignitus,Asia (Japan),field (experiment plot),"foraging behavior (foraging load, foraging efficiency)",tongue length,"foraging behavior (foraging load, foraging efficiency)",-
+Ishii et al. 2008,B. terrestris*,"B. diversus tersatus, B. pseudobaicalensis, B. hypocrita sapporoensis",Asia (Japan),field (agricultural & natural),"habitat occupancy, foraging behavior (floral preferences)",flower morphology & tongue length,"habitat occupancy, foraging behavior (floral preferences)",-
+Kajobe 2007,A. mellifera,"Meliponula bocandei, Meliponula nebulata",Africa (Uganda),field (natural),foraging behavior (diversity of pollen collected),bee body & colony size,foraging behavior (diversity of pollen collected),-/0
+Kato & Kawakita 2004,A. mellifera*,many,New Caledonia,field (natural),foraging behavior (plant use),none,foraging behavior (plant use),-
+Kato et al. 1999,A. mellifera*,many,Bonin Islands,field (natural),relative abundance,none,relative abundance,-
+Kuhn et al. 2006,A. mellifera,Megachile lapponica,Europe (Germany),field (natural),density,none,"visitation rates, foraging behavior (duration of foraging flights), brood cell construction",0
+Lindstrom et al. 2016,A. mellifera,many,Europe (Sweden),field (agricultural),"presence/ absence, density",none,density,-
+Lye et al. 2011,B. terrestris*,many,North America (USA),field (agricultural),presence/ absence,none,visitation rates,0
+Martins 2004,A. mellifera,many,Africa (Kenya),field (natural),"visitation rates, foraging behavior (temporal foraging patterns, plant use)","direct displacement, nectar & pollen removal/ depletio-n","visitation rates, foraging behavior (temporal foraging patterns, plant use)",-
+Menezes et al. 2007,A. mellifera*,Scaptotrigona spp.,South America (Brazil),field (experiment plot),presence/ absence,none (resource partitioning implied),"visitation rates, foraging behavior (floral preference)",-
+Morales et al. 2013,"Bombus ruderatus*, B. terrestris*",B. dahlbomii,South America (Chile),field (natural),"temporal trends in regional abundance, geographic distribution",none,"temporal trends in regional abundance, geographic distribution",-
+Nagamitsu et al. 2007a,B. terrestris*,"B. ardens, B. hypocrita",Asia (Japan),field (experiment plot),presence/ absence,nectar availability,"queen body mass, colony mass",0
+Nagamitsu et al. 2007b,B. terrestris*,"B. hypocrita, B. ardens, B. diversus",Asia (Japan),field (natural),abundance,tongue length,"abundance, body size",0
+Nagamitsu et al. 2010,B. terrestris*,"B. ardens, B. hypocrita",Asia (Japan),field (natural),presence/ absence,tongue length,"abundance, worker body size",-
+Nakamura 2014,B. terrestris*,"B. pseudobaicalensis, B. hypocrita sapporoensis",Asia (Japan),field (developed),"visitation rates, foraging behavior (pollen type & diversity on body)",niche overlap,"visitation rates, foraging behavior (pollen type & diversity on body)",0/-
+Neumayer 2006,A. mellifera,many,Europe (Austria),field (natural),"distance from hive, presence/ absence",nectar availability,visitation rates/ local abundance,-
+Nielsen et al. 2012,A. mellifera,many,Europe,field (natural),visitation rates,none,visitation rates,-/0/+
+Nishikawa & Shimamura 2015,B. terrestris*,"B. hypocrita, Bombus deuteronymus",Asia (Japan),field (natural),visitation rates,"tongue length, head width, niche overlap",visitation rates,0
+Paini & Roberts 2005,A. mellifera*,Hylaeus alcyoneus,Australia,field (natural),presence/ absence,none,"fecundity (number of nests, number of eggs per nest, progeny mass)",-
+Paini et al. 2005,A. mellifera*,Megachile spp.,Australia,field (natural),presence/ absence,none (temperature adaptations implied),reproductive success,0
+Pedro & Camargo 1991,A. mellifera*,many,South America (Brazil),field (semi- natural),"relative abundance, foraging behavior (floral preference)",none,"relative abundance, foraging behavior (floral preference)",0
+Pick & Schlindwein 2011,A. mellifera*,"Melitoma segmentaria, Melitoma osmioides, Melitomella murihir, Lithurgus huberi",South America (Brazil),field (natural),"foraging behavior (floral preferences), visitation rates",pollen removal,"foraging behavior (floral preferences), visitation rates",0
+Pinkus- Rendon et al. 2005,A. mellifera*,"Peponapis limitaris, Partamona bilineata",North America (Mexico),field (agricultural),"visitation rates, foraging behavior (plant use)","niche overlap, direct displacement interactions","visitation rates, foraging behavior (plant use)",-
+Pleasants 1981,A. mellifera*,Bombus spp.,North America (USA),field (experiment plots),presence/ absence,tongue length,abundance,-
+Rogers et al. 2013,A. mellifera*,Bombus impatiens,North America (USA),field (experiment plots),response to intra & interspecific physical encounters at flowers,none,response to intra & interspecific physical encounters at flowers,-
+Roubik 1978,A. mellifera*,many,South America (French Guiana),field (natural),presence/ absence,none,"flower visitation rates, foraging behavior (duration of floral visits)",-/0
+Roubik 1980,A. mellifera*,"Melipona spp., Trigona spp.",South America (French Guiana),field (natural),visitation rates to feeders,partitioning & displacement interactions at feeders,visitation rates to feeders,0/-
+Roubik 1983,A. mellifera*,"Melipona favosa, Melipona fulva",South America (French Guiana),field (natural),"presence/ absence, number of hives, amounts of brood, honey, & pollen in hive",none,"amounts of brood, honey, & pollen in nest",0
+Roubik et al. 1986,A. mellifera*,many,North America (Panama),field (natural),"rate of forager return, foraging behavior (type, quantity, & quality of pollen & nectar gathered)",niche overlap,"rate of forager return, foraging behavior (type, quantity & quality of pollen & nectar gathered)",-/0
+Roubik & Villanueva- Gutierrez 2009,A. mellifera*,many,North America (Mexico),field (natural),"presence/ absence, foraging behaviors (plant use)",niche overlap,"abundance, foraging behavior (pollen identity & diversity)",0
+Roubik & Wolda 2001,A. mellifera*,many,North America (Panama),field (natural),"presence/ absence, abundance",none,abundance,0
+Schaffer et al. 1979,A. mellifera*,"Bombus sonorous, Xylocopa arizonensis",North America (USA),field (natural),"visitation rates, foraging behavior (resource collection)",none,"visitation rates, foraging behavior (resource collection)",-
+Schaffer et al 1983,A. mellifera*,many,North America (USA),field (natural),presence/ absence,nectar standing crop,visitation rates,-
+Semida & Elbanna 2006,A. mellifera,many,Africa (Egypt),field (natural),visitation rates,none,visitation rates,-/0
+Shavit et al. 2009,A. mellifera,many,Asia (Israel),field (natural),presence/ absence,none,"foraging behavior (temporal foraging patterns, plant use), visitation rates",-/0
+Smith- Ramirez et al. 2014,"A. mellifera*, B. terrestris*",many,South America (Chile),field (natural),visitation rates,none,visitation rates,-
+Sugden & Pyke 1991,A. mellifera*,Exoneura asimillima,Australia,field (natural),presence/ absence,none,"colony survival, developmental stage & sex ratios, relative frequency of founder vs. established colonies",-
+Steffan- Dewenter & Tscharntke 2000,A. mellifera,many,Europe (Germany),field (natural),"density, visitation rates",niche overlap,"abundance, diversity, number of nests, number of brood cells, visitation rates",0
+Tepedino et al. 2007,A. mellifera*,many,North America (USA),field (agricultural),"visitation rates, distance from hive",none,visitation rates,0
+Thomson 2004,A. mellifera*,B. occidentalis,North America (USA),field (natural),distance from hive,foraging effort devoted to pollen collection,"foraging behavior (pollen vs. nectar collection, forager return rates), reproductive success",-
+Thomson 2006,A. mellifera*,Bombus spp.,North America (USA),field (natural),"foraging behavior (plant use), visitation rates, distance from hive",niche overlap,"foraging behavior (plant use), visitation rates, abundance",-/0
+Thomson 2016,A. mellifera*,Bombus spp.,North America (USA),field (natural),density,niche overlap,densities,-
+Torne- Noguera et al. 2016,A. mellifera,many,Europe (Spain),field (natural),"distance to apiary, visitation rate",resource consumption (nectar & pollen consumption),"visitation rate, wild bee biomass",-
+Walther- Hellwig et al. 2006,A. mellifera,Bombus spp.,Europe (Germany),field (agricultural),density,tongue length,visitation rates/ local abundance,-/0
+Wilms & Weichers 1997,A. mellifera*,"Melipona bicolor, Melipona quadrifasciata",South America (Brazil),field (natural),foraging behavior (types & amount of pollen & nectar collected),niche overlap,foraging behavior (types & amount of pollen & nectar collected),-

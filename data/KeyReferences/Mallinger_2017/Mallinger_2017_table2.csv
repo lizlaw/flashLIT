@@ -1,0 +1,48 @@
+Reference,Managed bee species (* indicates exotic range),Wild bee species,Location,Context,Managed bee metric (independent variable),Explanatory mechanism variable,Plant metric (dependent variable),Reported effect
+Abe et al. 2011,Apis mellifera*,Xylocopa ogasawarensis & others,Asia (Japan),field (natural),visitation rates,pollen limitation,fruit set,-
+Aslan et al. 2016,A. mellifera*,many,North America (USA),field (natural),visitation rates,none,none,+/0
+Barthell et al. 2001,A. mellifera*,many,North America (USA),field (natural),visitation rates,none,seed set,-
+Beavon & Kelly 2012,"A. mellifera*, Bombus spp.*",many,New Zealand,field (natural),"visitation rates, presence/absence",none,"fruit set, seed set, fruit size, germination success",-
+Bruckman & Campbell 2014,A. mellifera*,many,North America (USA),field (natural),"visitation rates, foraging behavior (pollen deposition)",pollinator importance (visitation rates x conspecific pollen deposition),seed set,+/0
+Carbonari et al. 2009,A. mellifera*,none,South America (Brazil),field (natural),foraging behavior (frequency of nectar robbing),occurrence of illegitimate visits,floral abortion,-
+Cayuela et al. 2011,A. mellifera,none,Europe (Spain),field (natural),distance from apiary,none,fruit set,+/0
+Chamberlain & Schlising 2008,A. mellifera*,many,North America (USA),field (natural),visitation rates,none,seed set,+
+Descamps et al. 2015,A. mellifera,many,Europe (France),field (natural),visitation rates,none,none,+
+Dick 2001,A. mellifera scutellata*,many,South America (Brazil),field (natural),visitation rates,none,"seed set, genetic diversity, gene flow",+
+Dohzono et al. 2008,Bombus terrestris*,"Bombus ardens, Bombus hypocrita",Asia (Japan),field (natural),presence/absence,occurrence of illegitimate visits,fruit & seed set,-
+Dupont et al. 2004,A. mellifera*,many,Canary Islands,field (natural),abundance,"foraging behavior (visitation length, foraging preferences)",seed set & viability,0
+Esterio et al. 2013,B. terrestris*,many,South America (Chile),field (natural),"visitation rates, foraging behavior (pollen collection, pollen deposition)",none,none,0
+Faria & Araujo 2015,A. mellifera*,Augochloropsis spp.,South America (Brazil),field (natural),pollinator effectiveness (fruit set per visit),none,fruit set,+
+Faria & Araujo 2016,A. mellifera*,many,South America (Brazil),field (natural),visitation rates,none,none,+
+Gilpin et al. 2014,A. mellifera*,many,Australia,field (natural),"visitation rates, foraging behavior (inter & intra-plant movements, pollen diversity on body)",pollinator fidelity,relative plant distribution,+
+Goulson & Derwent 2004,A. mellifera*,many,Australia,"field (natural), greenhouse","abundance, visitation rates, presence/absence",none,"fruit set, seed set",-
+Goulson & Rotheray 2012,"A. mellifera*, B. terrestris*",many,Tasmania,field (natural),visitation rates,none,"population size, seed set",-/0
+Gross 2001,A. mellifera*,many,Australia,field (natural),"abundance, visitation rates, foraging behavior (handling time)",none,"pollen limitation, fruit set",+
+Gross & Mackay 1998,A. mellifera*,many,Australia,field (natural),visitation rates,pollen deposition & removal per visit,fruit & seed set,-
+Gross et al. 2010,A. mellifera*,many,Australia,"field (semi- natural, experiment plots)","visitation rates, abundance, presence/absence, foraging behavior (foraging time, number of probes per flower head, etc.)",none,"abundance, seed set",-
+Hanna et al. 2013,A. mellifera*,many,Hawaii,"field (natural, experiment plots)","visitation rates, presence/absence",none,fruit set,+
+Hingston 2005,B. terrestris*,none,Australia,field (garden),"visitation rates, foraging behavior (floral preferences)",none,none,0
+Hermansen et al. 2014,A. mellifera*,many,Australia,field (natural),"visitation rates, foraging behavior (pollen load diversity, pollen removal & deposition)",none,none,+
+Horskins & Turner 1999,A. mellifera*,many,Australia,field (natural),"foraging behavior (temporal foraging patterns, stigma contact, nectar vs. pollen collection, pollen load diversity)",none,none,+
+Junker et al. 2010,A. mellifera*,Hylaeus spp.,Hawaii,field (natural),"presence/absence, visitation rates, foraging behavior (foraging trip duration, stigma contacts, resource collection)",pollinator effectiveness,fruit set,+
+Kaiser- Bunbury & Müller 2009,A. mellifera*,many,Mauritius,field (experiment plots),visitation rates,none,"fruit set, seed set, fruit size & weight",+
+Kaiser- Bunbury et al. 2011,A. mellifera*,many,Seychelles,field (natural),visitation rates,none,"plant reproductive success, fruit set",-/0
+Kenta et al. 2007,Bombus terrestris*,Bombus spp.,Asia (Japan),greenhouse,presence/absence,rate of legitimate floral visits,"fruit set, fruit quality",-
+Liu et al. 2013,A. mellifera*,many,Asia (China),"field (natural, experiment plots)",visitation rates,pollen transfer & deposition,fruit & seed set,-
+Liu et al. 2006,A. mellifera*,many,North America (USA),field (natural),visitation rates,none,fruit set,-
+Lomov et al. 2010,A. mellifera*,many,Australia,field (natural),"presence/absence, visitation rates, foraging behavior (contact with stigma & anthers)","pollen count per stigma, presence/ absence of germinated pollen",fruit & seed set,0
+Madjidian et al. 2008,Bombus ruderatus*,Bombus dahlbomii,South America (Argentina),field (natural),"visitation rates, foraging behavior (time spent per flower, pollen deposition)",pollinator effectiveness (efficiency per visit*visitation frequency),seed set,+
+McGregor et al. 1959,A. mellifera*,many,North America (USA),field (natural),"visitation rates, foraging behavior",none,none,+/0
+Miller et al. 2015,A. mellifera*,Hylaeus spp.,Hawaii,field (natural/ semi-natural),"visitation rates, foraging behavior (pollen quantity, type & diversity on body)",none,none,-
+Montalva et al. 2011,"B. terrestris*, B. ruderatus*","B. dahlbomii, Bombus funebris",South America (Chile),field (natural),"distribution, foraging behavior (floral association)",none,distribution,-
+Morandin & Kremen 2013,A. mellifera*,many,North America (USA),field (natural),"abundance, foraging behavior (floral preference)",none,none,+/0
+Ott et al. 2016,A. mellifera*,"Bombus vosnesenskii, Xylocopa spp.",North America (USA),field (natural),"visitation rates, foraging behavior (handling time, contact with pollen/ stigma, nectar intake), body size",none,none,0
+Richardson et al. 2016,A. mellifera*,many,North America (USA),field (natural),"visitation rates, foraging behavior (number of floral visits per plant, plant preferences)",none,"numbers of seed capsules, intact seeds, & total seeds",+
+Sanguinetti & Singer 2014,"A. mellifera*, B. terrestris*, B. ruderatus*",many,South America (Argentina),field (natural),"visitation rates, pollinator behavior (time per flower, number of flowers visited)",none,fruit set,+
+Simpson et al. 2005,A. mellifera*,many,Australia,field (natural),"presence/absence, visitation rates, foraging behavior (flower tripping)",pollinator efficacy (fruit set per single visit),"seed set, fruit set",-
+Stout et al. 2002,"A. mellifera*, B. terrestris*",many,Tasmania,field (natural),visitation rates,none,"seed set, number of ovules fertilized per flower",-
+Sun et al. 2013a,"A. mellifera*, B. terrestris*",many,Asia (China),field (natural),"visitation rates, foraging behavior (resource collection, number of flower visits per foraging bout, pollen removal & deposition)",pollination efficacy (combinations of all bee variables),fruit & seed set,+
+Sun et al. 2013b,A. mellifera*,many,Asia (China),"field (natural, experiment plots)","presence/absence, visitation rate, foraging behavior (number of capitula visited per plant, pollen load diversity)",none,seed set,+/0
+Taylor & Whelan 1988,A. mellifera*,many,Australia,field (natural),"visitation rate, foraging behavior (nectar vs. pollen collection, pollen deposition, pollen type & diversity)",none,none,-
+Woods et al. 2012,A. mellifera*,many,North America (USA),field (natural),"visitation rate, foraging behavior",none,none,-
+Xia et al. 2007,"A. mellifera*, Apis cerana","Bombus richardsi, Bombus. atrocinctus",Asia (China),field (natural),"presence/absence, abundance, visitation rate, foraging behaviors (intra- & inter- plant movement)",none,"outcrossing rates, fruit & seed set",+

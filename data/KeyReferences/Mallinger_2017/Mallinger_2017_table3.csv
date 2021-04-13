@@ -1,0 +1,28 @@
+Reference,Managed bee species (* indicates non-native),Wild bee species,Location,Context,Managed bee metric (independent variable),Explanatory mechanism variable,Wild bee metric (response variable),Reported effect
+Arbetman et al. 2013,"Bombus ruderatus*, Bombus terrestris*",Bombus dahlbomii,South America (Argentina),field (natural),presence/ absence,none (transmission implied),parasite presence/ absence,-
+Cameron et al. 2016,Bombus spp.,Bombus spp.,North America (USA),lab,before/after pathogen introduction from commercial colonies,none (transmission implied),"pathogen prevalence, pathogen genetic variation",-
+Colla et al. 2006,Bombus impatiens,Bombus spp.,North America (Canada),field (semi- natural),distance to commercial greenhouses,none (transmission implied),pathogen prevalence,-
+Dolezal et al. 2016,Apis mellifera*,many,North America (USA),"field (natural, agriculture), lab","pathogen prevalence, viral load",none,"pathogen prevalence, pathogen load, lethality to bees",-/0
+Forsgren et al. 2015,A. mellifera*,Apis cerana,Asia (Vietnam & China),field,pathogen prevalence,none,pathogen prevalence,0
+Fürst et al. 2014,A. mellifera,Bombus spp.,Europe (UK),"field, lab",pathogen prevalence,transmission,"pathogen susceptibility/ infectivity, pathogen prevalence",-
+Genersch et al. 2006,A. mellifera,"B. terrestris, Bombus pascuorum",Europe (Germany),field,presence,none (transmission implied),pathogen occurrence,-
+Gilliam et al. 1994,1 A. mellifera*,Xylocopa californica arizonensis,North America (USA),field (natural),none,none (transmission implied),pathogen occurrence,-
+Graystock et al. 2013,1 A. mellifera,Bombus spp.,Europe (UK),"field, lab",none,none (transmission implied),pathogen prevalence & infectivity,-
+Graystock et al. 2014,"Bombus spp., A. mellifera",Bombus spp.,Europe (UK),field (agricultural),"presence/ absence, distance from apiary",none,pathogen/ parasite prevalence & richness,-
+Hoffmann et al. 2008,A. mellifera*,2 B. impatiens,North America (USA),"greenhouse, lab",parasite host preference & host shifting,none,"parasite host preference & host shifting, bee defense behavior",-
+Koch & Strange 2012,1 Bombus spp.,"Bombus occidentalis, Bombus moderatus",North America (USA),field (natural),none,none (transmission implied),"bee distribution & relative abundance, pathogen prevalence",0
+Kojima et al. 2011,A. mellifera*,A. cerana,Asia (Japan),field,infection frequency,none (implied transmission),infection frequency,-/0
+Levitt et al. 2013,A. mellifera*,many,North America (USA),field (natural),pathogen presence,none (implied transmission),pathogen presence,-
+Li et al. 2011,1 A. mellifera*,Bombus huntii,North America (USA),"field, lab",none,none,pathogen infectivity,-
+Maharramov et al. 2013,"B. terrestris*, B. ruderatus*, A. mellifera*",B. dahlbomii,South America (Argentina),field (natural),genetic description of parasite,none (implied transmission),genetic description of parasite,-
+McMahon et al. 2015,A. mellifera,Bombus spp.,Europe (UK),field,"abundance (estimated), pathogen prevalence, pathogen load",none,"pathogen prevalence, pathogen load",-
+Murray et al. 2013,B. terrestris,Bombus spp.,Europe (Ireland),field (agricultural),pathogen prevalence,foraging behavior,pathogen prevalence,-
+Niwa et al. 2004,B. terrestris*,"Bombus hypocrita, Bombus diversus",Asia (Japan),lab,pathogen prevalence,none,pathogen infectivity,-
+Otterstater et al. 2008,B. impatiens,Bombus spp.,North America (Canada),"field (agricultural), lab","presence/ absence, distance from greenhouse",none (implied transmission),pathogen prevalence,-
+Peng et al. 2011,1 A. mellifera*,B. huntii,North America (USA),"field, lab",none,none,pathogen infectivity,-
+Plischuk & Lange 2009,Bombus terrestris*,"Bombus atratus, Bombus morio, Bombus bellicosus, Bombus opifex, Bombus. tucumanus",South America (Argentina),field (natural),pathogen prevalence,none (implied transmission risk),pathogen prevalence,0
+Plischuk et al. 2009,1 A. mellifera*,"B. atratus, B. morio, B. bellicosus",South America (Argentina),field (natural),none,none (implied transmission risk),pathogen presence,-/0
+Ravoet et al. 2014,A. mellifera,"Osmia spp., Andrena spp., Heriades truncorum",Europe (Belgium),field (developed),pathogen presence,none,pathogen presence,-
+Singh et al. 2010,A. mellifera*,many,North America (USA),"field (natural, agricultural), lab",pathogen presence,transmission,pathogen presence,-
+Szabo et al. 2012,B. terrestris*,"Bombus affinis, Bombus terricola, Bombus pensylvanic-us",North America,field (natural),density of vegetable greenhouses,none (implied transmission),bee geographic range (historic/ current),-/0
+Whitehorn et al. 2013,"B. terrestris, B. terrestris audax","B. pascuorum, Bombus pratorum, Bombus lapidarius",Europe (UK),field (agricultural),presence/ absence,none (implied transmission),pathogen prevalence & abundance,0
