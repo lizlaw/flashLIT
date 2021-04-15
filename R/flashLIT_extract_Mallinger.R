@@ -5,6 +5,24 @@
 
 # Mallinger ==================================================================
 
+# methods from Mallinger
+"We performed a systematic search of the literature using Web of Knowledge/Web of Science
+(ISI Thompson-Reuters, webofknowledge.com) to identify studies that examined the effects of
+managed bees on wild bees via competition, changes in plant communities, and transmission
+of pathogens."
+
+# SEARCH:
+"(ªApis melliferaº OR ªhoney beeº OR honeybee) AND (competition OR disease OR pathogen OR (pollin* AND (exotic OR invasive)))"
+"(Bombus OR ªbumble beeº OR bumblebee) AND (competition OR disease OR pathogen OR (pollin* AND (exotic OR invasive)))"
+"ªmanaged beeº AND (competition OR disease OR pathogen OR (pollin* AND (exotic OR invasive)))"
+
+"We additionally reviewed all articles that were cited by the two older non-systematic reviews on this topic [11-12], and
+searched for all recent articles that cited these two reviews [11-12]."
+# Goulson D. Effects of introduced bees on native ecosystems. Annual Review of Ecology, Evolution, and Systematics. 2003; 1-26.
+# Paini DR. Impact of the introduced honey bee (Apis mellifera) (Hymenoptera: Apidae) on native bees: a review. Austral Ecology. 2004; 29: 399-407. https://doi.org/10.1111/j.1442-9993.2004.01376.x
+
+#  ==================================================================
+
 list.files("data/KeyReferences/Mallinger_2017")
 
 # Table 1. Studies published from 1900±2016 examining potential competitive effects of managed bees on wild bees.
@@ -158,3 +176,4 @@ aujj <- auj2[15,] %>% # is the only match, title has extra spaces
 isjoined <- isjoined %>% bind_rows(aujj) #105
 
 notjoined <- notjoined %>% filter(!fullref %in% isjoined$fullref ) # n=48
+

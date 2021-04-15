@@ -5,6 +5,21 @@
 
 # ==================================================================
 
+# Search from WoS
+
+# Managed
+# (African* NEAR/3 bee) OR Apis OR Bombus OR "bumble bee" OR bumblebee* OR "honey bee" OR honeybee OR ((introduc* OR inva* OR non-native OR nonnative OR commercial OR exotic OR feral OR managed) NEAR/3 (bee OR pollin*))
+# Native
+# (((cavity OR ground) NEAR/3 nesting) OR (native OR solitary OR wild)) NEAR/3 (bee OR pollin*)
+# Interaction
+# pollinat* OR network* OR “niche overlap” OR “partitioning” OR interact* OR competit* OR facilitat* OR mutualis* OR “resource limitation” OR hybridization OR introgression OR dependence OR assemblag* OR overlap OR spillover OR impact*
+  
+Search: 15.04.2021
+Searching 1987-current
+
+
+
+# ==================================================================
 
 # import data. 
 # Data can come as a bibliography in many formats, and can be imported via revtools or scimeetr.

@@ -3,6 +3,8 @@
 ### OPTIONS for different versions
 
 # initial searches
+
+!! start with this next time
 reduce inital DB by not including the keywordsplus in the search (ie not searching in Topic, but specifying Title, Abstract, and Keywords). If we need to be relatively specific in our search terms (ie include native and managed bees) then we probably want to restrict this to what the papers are actually about.
 - how many papers does this affect?
 - when might you want to use keywords plus? Is more better? 
@@ -38,3 +40,7 @@ Such conditions might be: drought years, beginning/end of seasons, monocultures.
 
 Is foraging efficiency of honeybees (communicative strategy feeders) influenced by diversity of resources? Or is natural variation in abundance enough to allow them to specialise? 
 
+
+Parasite defense mechanisms in bees: behavior, immunity, antimicrobials, and symbionts
+By: Fowler, Alison E.; Irwin, Rebecca E.; Adler, Lynn S.
+EMERGING TOPICS IN LIFE SCIENCES   Volume:  4   Issue:  1   Special Issue:  SI   Pages:  59-76   Published:  JUL 2020
