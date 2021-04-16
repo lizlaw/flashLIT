@@ -12,18 +12,19 @@
 # these are not meant to be complete, just an indicator of the group quality
 
 allreviews <- DB1 %>% 
-  filter(grepl(pattern ='review|metaanalysis|meta analysis', x = abstract))
-# 143 papers from 2400
+  filter(grepl(pattern ='review|metaanalysis|meta analysis', x = abstract)) %>% 
+  add_ref()
+# 69 papers
 
 compreviews <- allreviews %>% 
   filter(grepl(pattern ='competition', x = abstract))
-# 22 papers
+# 13 papers
 
 floralcompreviews <- compreviews %>% 
   filter(grepl(pattern ='floral|flower|food', x = abstract)) %>% 
   pull(ref)
   #pull(abstract_orig)
-# 16 papers
+# 10 papers
 
 nestcompreviews <- compreviews %>% 
   filter(grepl(pattern ='nest', x = abstract)) %>% 
@@ -63,21 +64,84 @@ opppreviews <- allreviews %>%
 "CANE J, et al., 2011, Predicted fates of ground-nesting bees in soil heated by wildfire: Thermal tolerances of life stages and a survey of nesting depths, BIOL CONSERV" 
 "WOOD T, et al., NA, Managed honey bees as a radar for wild bee decline?, APIDOLOGIE"  
 "OLGUN T, et al., 2020, Comparative analysis of viruses in four bee species collected from agricultural, urban, and natural landscapes, PLOS ONE" 
+"CHANDLER D, et al., 2019, Are there risks to wild European bumble bees from using commercial stocks of domesticated Bombus terrestris for crop pollination?, J APICULT RES"
+"STOUT J, et al., 2009, Ecological impacts of invasive alien species on bees, APIDOLOGIE"  
 
-
-# for each of these papers, we can download their bibliographies (or the lists within a paper), and identify the papers allocated to each category
+# for each of these papers, we can download both their bibliographies (or the lists within a paper), and the papers that cite them. 
+# for those with specific and seperate categories (e.g. presented in tables in the papers), we can futher identify the papers allocated to each category
 # these can be used to test the categorisation.
 
-list.files("data/KeyReferences")
+list.files("data/raw_WoS_20210415/FromKeyReviews")
+list.files("data/KeyReferences") # includes ones we can further categorise into lists, and the potential lists that we can use from e.g. tables
 
-# What we would like to split on -----------------------------
+# Importing the key review papers -----------------------------
 
-# Nest competition (i.e. specifically citing nest site competition)
-# Floral competition (inc visitation rates, foraging behaviour, floral resources, and managed bee driven changes in pollinator networks)
-# Pathogens, pesticides, etc (relative sensitivity)
-# Plant mediated (i.e. plant driven changes in pollinator networks)
-# No mechanism suggested (change in presence, abundance, diversity/composition, fitness (including size, survival and nest-based fitness)
+KR0_cites <- import_wos_files_DFonly("./data/raw_WoS_20210415/FromKeyReviews/cites/")
+KR0_refs <- import_wos_ref_files("./data/raw_WoS_20210415/FromKeyReviews/refs/")
 
-# displacement and niche overlap is likely to indicate floral competition
+# select and clean
+KR1_cites <- KR0_cites %>% 
+  convert_names(from = "wos", to = "bib") %>% 
+  tibble::tibble() %>% 
+  dplyr::select(doi, 
+                author, 
+                title, 
+                keywords = author_keywords, 
+                keywords_plus, 
+                abstract, 
+                cited_references, 
+                language, 
+                document_type, 
+                n_cited_allwos,  
+                year, 
+                early_access_date,
+                #journal, journal_iso,
+                journal_iso = source_abbreviation_29char, 
+                volume, 
+                pages, 
+                article_number,
+                date_generated,
+                folder,
+                file
+  ) %>% 
+  dplyr::mutate(
+    title_orig = title,
+    abstract_orig = abstract,
+    keywords_orig = keywords
+  ) %>% 
+  tibble::rownames_to_column(var = 'KRC_ID') %>% 
+  dplyr::mutate(KRC_ID = paste0('KRC_ID', stringr::str_pad(KRC_ID, 5, 'left', 0))) %>% 
+  dplyr::mutate(across(everything(), na_if, y="")) %>% 
+  mutate(across(c(title, abstract), clean_text)) %>% 
+  mutate(across(c(title, abstract), stemR))  %>% 
+  mutate(across(c(title, abstract), stemCompletR, .dict = stemDict))
 
+KR1_refs <- KR0_refs %>% 
+  convert_names(from = "wos", to = "bib") %>% 
+  tibble::tibble() %>% 
+  dplyr::select(doi, 
+                author, 
+                title, 
+                abstract, 
+                n_cited_allwos,  
+                year, 
+                early_access_date,
+                #journal, journal_iso,
+                journal_iso = source, 
+                volume, 
+                pages, 
+                article_number,
+                folder,
+                file
+  ) %>% 
+  dplyr::mutate(
+    title_orig = title,
+    abstract_orig = abstract
+  ) %>% 
+  tibble::rownames_to_column(var = 'KRR_ID') %>% 
+  dplyr::mutate(KRR_ID = paste0('KRR_ID', stringr::str_pad(KRR_ID, 5, 'left', 0))) %>% 
+  dplyr::mutate(across(everything(), na_if, y="")) %>% 
+  mutate(across(c(title, abstract), clean_text)) %>% 
+  mutate(across(c(title, abstract), stemR))  %>% 
+  mutate(across(c(title, abstract), stemCompletR, .dict = stemDict))
 

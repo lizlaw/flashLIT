@@ -5,18 +5,24 @@
 
 # ==================================================================
 
-# Search from WoS
+# Search from WoS - multiple different versions searched on 15.04.2021, Searching 1987-current (all available)
 
-# Managed
-# (African* NEAR/3 bee) OR Apis OR Bombus OR "bumble bee" OR bumblebee* OR "honey bee" OR honeybee OR ((introduc* OR inva* OR non-native OR nonnative OR commercial OR exotic OR feral OR managed) NEAR/3 (bee OR pollin*))
-# Native
-# (((cavity OR ground) NEAR/3 nesting) OR (native OR solitary OR wild)) NEAR/3 (bee OR pollin*)
-# Interaction
-# pollinat* OR network* OR “niche overlap” OR “partitioning” OR interact* OR competit* OR facilitat* OR mutualis* OR “resource limitation” OR hybridization OR introgression OR dependence OR assemblag* OR overlap OR spillover OR impact*
-  
-Search: 15.04.2021
-Searching 1987-current
+#M: Managed	(African* XXX bee) OR Apis OR Bombus OR "bumble bee" OR bumblebee* OR "honey bee" OR honeybee OR ((introduc* OR invas* OR non-native OR nonnative OR commercial OR exotic OR feral OR managed) XXX (bee OR pollin*))
+#N: Native	(((cavity OR ground OR stem) XXX nesting) OR (native OR solitary OR wild)) XXX (bee OR pollin*)
+#I: Interaction	pollinat* OR network* OR niche OR partition* OR interact* OR competit* OR facilitat* OR mutualis* OR “resource limitation” OR hybridization OR introgression OR dependen* OR assemblag* OR overlap OR spillover OR impact* OR community OR diversity
 
+# where XXX is AND, NEAR (defaults to NEAR/15), NEAR/3, and NEAR/1
+
+# also, we search either TOPIC, or TITLE + ABSTRACT + KEYWORDS (TAK)
+
+# we summarise with AND, for M+N and M+N+I
+
+# we are not interested in all these groups, some are slightly larger
+
+list.files("data/raw_WoS_20210415")
+
+# here, we develop the grouping using the groups initially using the smallest group
+# MNI_n1_TAK
 
 
 # ==================================================================
@@ -36,8 +42,12 @@ Searching 1987-current
 # revtools::read_bibliography(list.files(dd, full.names = TRUE))
 
 # scimeetr import 
-dd <- "./data/raw_WoS_20201105/as_txt/"
-sci.df <- scimeetr::import_wos_files(dd)$com1$dfsci
+# dd <- "./data/raw_WoS_20201105/as_txt/"
+# sci.df <- scimeetr::import_wos_files(dd)$com1$dfsci
+
+# customised scimeetr import (straight to df with file and folder information)
+dd <- "./data/raw_WoS_20210415/MNI_n1_TAK/"
+sci.df <- import_wos_files_DFonly(dd)
 
 # convert the scimeetr import to 'revtools' format
 scib.df <- sci.df %>% convert_names(from = "wos", to = "bib")
@@ -62,7 +72,9 @@ DB0 <- scib.df %>%
                 volume, 
                 pages, 
                 article_number,
-                date_generated
+                date_generated,
+                folder,
+                file
   ) %>% 
   dplyr::mutate(
     title_orig = title,
@@ -118,9 +130,9 @@ DB1[is.na(DB0$keywords),]$keywords %>% head()
 # so, we first need to identify all those cited references that match
 
 # extract the cited references into a list, creating a 'CID' identifier, and retaining PID information 
-CitedRefList <-  cited_references_tolist(DB1)  # Starts at almost 141K lines
-CitedRefList$CID %>% unique() %>% length()     # of which there are almost 60k unique 
-CitedRefClean <-  cited_references_cleanlist(CitedRefList) # reduces to 42,245 lines after cleaning
+CitedRefList <-  cited_references_tolist(DB1)  # Starts at almost 80K lines
+CitedRefList$CID %>% unique() %>% length()     # of which there are almost 37k unique 
+CitedRefClean <-  cited_references_cleanlist(CitedRefList) # reduces to 25,854 lines after cleaning
 
 # extract a comparison list from the documents
 CompareList <- cited_reference_comparelist(DB1) 
@@ -143,19 +155,16 @@ mAYVP %>%
   filter(!is.na(doi.y)) %>% 
   select(doi.x, doi.y, author.x, author.y, year.x, year.y, 
          journal_iso.x, journal_iso.y)
-# Brown OK - doi y from jstor
+
 # Do OK - doi y from bioONE complete
-# Godfree OK - doi x from bioONE complete
 # Holzschuh OK - doi x capitalised
-# Padilla OK - doi y capitalised
-# Reynaldi OK - doi y has a typo (extra 0)
 # Steffan-Dewenter OK - doi y has a typo (missing i)
 
 CitedRefMatch <- bind_rows(mDOI, mALL, mAYVP) %>% 
   select(CID, PID) %>% 
   distinct()
 
-# this results in 1393 cited references that can be tied to the records in our database, approx 58% of our database, and only 3.3% of all the unique (cleaned) bibliography entries.
+# this results in 727 cited references that can be tied to the records in our database, approx 54% of our database, and only 3% of all the unique (cleaned) bibliography entries.
 # This could be refined further, and maybe get a few more, but would likely be a low benefit:cost.
 
 # Add a column which includes the cited references that can be matched (i.e. PID's of matched cited references) in each PID
@@ -247,7 +256,7 @@ DB1 <- DB1 %>%
 
 quick_check(DB1)  %>% print(n=nrow(.))
 
-# finally, fill in year from early access date
+# finally, fill in age from year or early access date
 DB1 <- DB1 %>% 
   mutate(age = as.integer(format(Sys.time(), "%Y")) - as.integer(ifelse(is.na(year), str_extract(string = early_access_date, pattern = "[0-9]{4}"), year)))
 

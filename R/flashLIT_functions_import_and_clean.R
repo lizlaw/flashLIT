@@ -5,6 +5,120 @@
 
 # =============================
 
+# modify https://github.com/MaximeRivest/scimeetr/blob/master/R/import_wos_files.R
+# only create the DF
+# add columns with filename and foldername
+
+#' import_wos_files_DFonly
+#' 
+#' A modification of scimeetr::import_wos_files()  https://github.com/MaximeRivest/scimeetr/blob/master/R/import_wos_files.R
+#' This version only creates the DF (does not convert to a scimeetr list) and also includes the filename and folder
+#'
+#' @param files_directory 
+#'
+#' @return a dataframe 
+#' @export
+#'
+#' @examples
+import_wos_files_DFonly <-
+  function (files_directory) 
+  {
+    dfsci <- NULL
+    dfsci_temp <- NULL
+    
+    folder_content <- list.files(files_directory)
+    files_quantity <- length(folder_content)
+    
+    for (files in 1:files_quantity) {
+      full_file_path <- paste(files_directory, folder_content[files], 
+                              sep = "")
+      v_char <- suppressWarnings(readLines(full_file_path, encoding = "UTF-8"))
+      v_char <- iconv(v_char, from = "UTF-8", to = "ASCII", 
+                      sub = "")
+      v_char <- stringr::str_replace(v_char, "^[null]+", "")
+      tab_count <- stringr::str_count(v_char[], '\t')
+      good_lines <- c(1, which(tab_count == max(tab_count)))
+      dfsci_temp <- read.table(text = v_char[good_lines], header = T, quote = "",
+                               fileEncoding = 'ASCII',
+                               row.names = NULL,
+                               comment.char = "",
+                               stringsAsFactors = F,
+                               sep = "\t")
+      dnames <- names(dfsci_temp)[-1]
+      dfsci_temp <- dfsci_temp[-length(dfsci_temp)]
+      names(dfsci_temp) <- dnames
+      
+      dfsci_temp <- dfsci_temp %>% 
+        add_column(file = folder_content[files]) %>% 
+        add_column(folder = files_directory)
+      dfsci <- rbind(dfsci, dfsci_temp)
+    }
+    
+    dfsci <- dfsci %>% distinct()
+    
+    if(sum(is.na(dfsci$CR)) == nrow(dfsci)) {
+      warning("The field CR (cited reference) contains no references. \nAlmost everything is scimeetr will break without that field. \nWhen you download records from WOS or Scopus, please carefully follow that steps at: \nhttps://github.com/MaximeRivest/scimeetr#how-to-get-bibliometric-data",call. = F)
+    } 
+    
+    return(dfsci)
+  }
+
+# ==============================
+
+
+#' import_wos_ref_files
+#' 
+#' A modification of scimeetr::import_wos_files()  https://github.com/MaximeRivest/scimeetr/blob/master/R/import_wos_files.R
+#' This version only creates the DF (does not convert to a scimeetr list) and also includes the filename and folder
+#' AND is specific to importing the WoS output for the reference list of a paper(s).
+#'
+#' @param files_directory 
+#'
+#' @return a dataframe 
+#' @export
+#'
+#' @examples
+import_wos_ref_files <-
+  function (files_directory) 
+  {
+    dfsci <- NULL
+    dfsci_temp <- NULL
+    
+    folder_content <- list.files(files_directory)
+    files_quantity <- length(folder_content)
+    
+    for (files in 1:files_quantity) {
+      full_file_path <- paste(files_directory, folder_content[files], 
+                              sep = "")
+      v_char <- suppressWarnings(readLines(full_file_path, encoding = "UTF-8"))
+      v_char <- iconv(v_char, from = "UTF-8", to = "ASCII", 
+                      sub = "")
+      v_char <- stringr::str_replace(v_char, "^[null]+", "")
+      tab_count <- stringr::str_count(v_char[], '\t')
+      good_lines <- which(tab_count == max(tab_count))
+      dfsci_temp <- read.table(text = v_char[good_lines], header = T, quote = "",
+                               fileEncoding = 'ASCII',
+                               row.names = NULL,
+                               comment.char = "",
+                               stringsAsFactors = F,
+                               sep = "\t")
+      dfsci_temp <- dfsci_temp %>% 
+        add_column(file = folder_content[files]) %>% 
+        add_column(folder = files_directory)
+      dfsci <- rbind(dfsci, dfsci_temp)
+    }
+    
+    dfsci <- dfsci %>% distinct()
+    
+    if(sum(is.na(dfsci$CR)) == nrow(dfsci)) {
+      warning("The field CR (cited reference) contains no references. \nAlmost everything is scimeetr will break without that field. \nWhen you download records from WOS or Scopus, please carefully follow that steps at: \nhttps://github.com/MaximeRivest/scimeetr#how-to-get-bibliometric-data",call. = F)
+    } 
+    
+    return(dfsci)
+  }
+
+# ==============================
+
 #' convert_names
 #' 
 #' uses the revtools tags to convert between formats. NOTE this process can remove columns that are duplicated.
@@ -29,7 +143,7 @@ convert_names <- function(df, from, to){
       left_join(lookup, by = 'ris') %>% 
       mutate(bib = map2_chr(bib, ris, ~if_else(is.na(.x), .y, .x))) %>% 
       pull(bib)
-    df <- df %>% select(any_of(unname(unlist(lookup['bib']))))
+    df <- df %>% select(any_of(c(unname(unlist(lookup['bib'])), "folder", "file")))
   }
   
   # then, convert to other format, if not bib  
@@ -42,7 +156,7 @@ convert_names <- function(df, from, to){
       slice_head(n=1) %>% 
       ungroup() %>% 
       pull(ris)
-    df <- df %>% select(any_of(unname(unlist(lookup['ris']))))
+    df <- df %>% select(any_of(c(unname(unlist(lookup['ris'])), "folder", "file")))
   }
   return(df)
 }
