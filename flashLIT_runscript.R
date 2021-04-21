@@ -17,6 +17,7 @@ library(tm)          # text mining (term document)
 library(tidytext)    # tidy methods for term document matrices
 library(revtools)    # grouping (optional)
 library(fuzzyjoin)   # fuzzy matching of text strings
+library(tidystringdist) # fuzzy matching of text strings
 
 #library(synthesisr) # duplicates and handling of bibliography
 #library(litsearchr) # automated development of new search terms (optional)
@@ -35,13 +36,24 @@ source("./data/flashLIT_term_lists.R")
 # ggplot theme
 theme_set(theme_bw() + theme(panel.grid = element_blank()))
 
+# 0. Search term results ===========================================================
+
+# quick analysis of the numerical results of the alternative search terms
+source("./R/flashLIT_search_term_results.R") 
+
 # 1. import data ====================================================================
 
 # here we import the bibliography data, clean (including stem and complete), and format for the next step
 # we also save the stem dictionary which we use again later to clean the term lists
 
-# in this version we import 1358 references - the MNI_n1_TAK folder. we expect these to be most aligned with our needs.
-source("./R/flashLIT_import_and_clean.R")            
+# in this version we import a database containing (and distinguishing) all our sets
+source("./R/flashLIT_import_sets.R")    
+
+saveRDS(DL2, "data/flashLIT_DL2.RDS")
+
+# DL2 <- readRDS("data/flashLIT_DL2.RDS")
+
+source("./R/flashLIT_clean.R")  
 
 saveRDS(stemDict, "data/flashLIT_DB1_stemDict.RDS")
 saveRDS(DB1, "data/flashLIT_DB1.RDS")
@@ -51,6 +63,12 @@ saveRDS(DB1, "data/flashLIT_DB1.RDS")
 # here we cluster the data, by first developing a graph of the documents, with edges as the similarity between documents
 # in this version, we weight the abstract similarity more than the title and keywords, and these more than the authors, cited references, and cited journals
 # clutering is automated to iterate until all groups are below a threshold size
+
+#### we need to adjust this script to have different versions based on the various cluster input options
+## cluster options:
+# 1) TAK-raw, 2) TAK-clean 3)TAK-stem
+# 4) TAKKP-stem, 5) Bib, 6) TAKKP-stem-Au and 6) TAKKP-stem-Bib.
+# comparing across 1:3 and 3:7 separately.
 
 # DB1 <- readRDS("data/flashLIT_DB1.RDS")
 
@@ -82,12 +100,10 @@ saveRDS(coms_summaries, "data/flashLIT_coms_DB1_summmaries.RDS")
 
 source("./R/flashLIT_extract_key_reviews.R") 
 
-saveRDS(KR1_cites, "data/flashLIT_KR1_cites.RDS") 
-saveRDS(KR1_refs, "data/flashLIT_KR1_refs.RDS") 
+saveRDS(KR2_cites, "data/flashLIT_KR1_cites.RDS") 
+saveRDS(KR2_refs, "data/flashLIT_KR1_refs.RDS") 
 
-
-########### up to here. need to pivot these lists, find duplicates, and then match to the DB.
-
+# additionally ---
 
 # tables and citations from the key reviews were extracted using pdf2complextable functions (see the BeeBN folder within)
 # C:\Users\Elizabeth.Law\OneDrive - NINA\Other_work\WORKSHOPS_CONFERENCES\Workshop_EvidenceSynthesis\DataExtraction
@@ -102,6 +118,9 @@ source("./R/flashLIT_extract_Russo.R")
 
 # source("./R/flashLIT_stratified_sample.R") 
 # write_csv(stratsamp, "data/DB1_select_for_manual_categorisation.csv")
+
+# 5. match ===============================================================================
+
 
 # 6. develop term lists further ==========================================================
 

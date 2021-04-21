@@ -192,6 +192,50 @@ quick_check <- function(df){
   )
 }
 
+
+# =============================
+
+# checking for potential duplicates 
+
+#' fuzzymatch_potential_duplicates
+#' takes in two string vectors, and fuzzymatches them using tidystringdist (wrapper for stringdist). Two methods are selected, "jw", and "osa". It will return matched entries where 0 < jw < 0.2, or  0 < osa < 25 & jw < 0.3. This is reasonably generous and should find all the potential matches.
+#'
+#' @param V1 A character vector
+#' @param V2 Another character vector (or the same as V1)
+#'
+#' @return a tibble with V1, V2, osa and jw columns
+#' @export
+#'
+#' @examples
+fuzzymatch_potential_duplicates <- function(V1, V2=NULL){
+  if(is.null(V2)) {comb <- tidy_comb_all(c(V1))} else {expand_grid(V1 = V1, V2 = V2)}
+  tms <- tidystringdist::tidy_stringdist(comb, method = c("osa", "jw"))
+  bind_rows(
+    tms %>% filter(jw > 0 & jw < 0.2),
+    tms %>% filter(osa > 0 & osa < 25 & jw < 0.3) 
+  ) %>% filter(!duplicated(.))
+}
+
+#' checkmatch_potential_duplicates
+#'
+#' @param checktext a text string to find in the in_col
+#' @param dfs a list of databases to check in
+#' @param in_col the name of the input col
+#' @param ... additional output columns desired
+#'
+#' @return a tibble containing the rows with the checktext in the in_col
+#' @export
+#'
+#' @examples
+checkmatch_potential_duplicates <- function(checktext, dfs, in_col, ...){
+  in_col <- enquo(in_col)
+  out_cols <- enquos(...)
+  map_dfr(dfs, function(x) x %>% filter(grepl(checktext, !!in_col)) %>% select(!!in_col, !!!out_cols))
+}
+# checkmatch_potential_duplicates("Large-scale monitoring of effects of clothianidin-dressed oilseed rape seeds", list(DB1, KR2_refs), title_orig, year, author) 
+
+
+
 # =============================
 
 # Cleaning will be applied per column. First clean, then stem.
@@ -214,7 +258,8 @@ clean_text <- function(x, sep = NULL, .stopwords = meaningless_words){
   x <- x %>% 
     tolower() %>% 
     removeNumbers() %>% 
-    removePunctuation() %>% 
+    removePunctuation(preserve_intra_word_dashes = TRUE) %>% 
+    str_replace_all("-", " ") %>% 
     removeWords(words = .stopwords) %>% 
     stripWhitespace() %>% 
     trimws()
@@ -516,13 +561,15 @@ cited_reference_match <- function(crlist, comparelist, ..., filter_missing = TRU
 #' @export
 #'
 #' @examples
-clean_author_list <- function(x, .sep = "; "){
+clean_author_list <- function(x, .sep = "; ", .sep2 = ", "){
   x %>% 
     map( ~str_split(.x, pattern = .sep)[[1]]) %>% 
     map( ~toupper(.x) %>% 
-           removePunctuation() %>% 
-           stripWhitespace() %>% 
-           trimws() %>% 
-           str_extract("[A-Z]+[ ]{1}[A-Z]{1}"))
-  # extract the first word (any letter any number of times) a space, and the first initial
+          stripWhitespace() %>% 
+          trimws()) %>% 
+    map( function(x){
+      y <- str_split(x, pattern = .sep2) 
+      map(y, ~paste(.x[1], str_sub(.x[2], 1, 1))) %>% # extract the surname and the first initial
+        unlist() %>% 
+        removePunctuation(preserve_intra_word_dashes=TRUE)})
 }

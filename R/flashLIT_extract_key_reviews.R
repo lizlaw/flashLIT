@@ -71,6 +71,9 @@ opppreviews <- allreviews %>%
 # for those with specific and seperate categories (e.g. presented in tables in the papers), we can futher identify the papers allocated to each category
 # these can be used to test the categorisation.
 
+# I did this from WoS, but matt says:
+# We have updated citationchaser (citationchaser (shinyapps.io)) so you dont need an API from the Shinyserver (still need one in the R package). That might help with back/forward citation.
+
 list.files("data/raw_WoS_20210415/FromKeyReviews")
 list.files("data/KeyReferences") # includes ones we can further categorise into lists, and the potential lists that we can use from e.g. tables
 
@@ -145,3 +148,96 @@ KR1_refs <- KR0_refs %>%
   mutate(across(c(title, abstract), stemR))  %>% 
   mutate(across(c(title, abstract), stemCompletR, .dict = stemDict))
 
+# ==================================================================
+# clean the KR1_cites and KR1_refs to unique entries before proceeding
+
+# KR1_cites ---
+
+dup_title <- KR1_cites %>% filter(duplicated(title)) %>% pull(title)
+dup_doi <- KR1_cites %>% filter(!is.na(doi)) %>% filter(duplicated(doi)) %>% pull(doi)
+
+# check manually - OK happy all duplicates are matches based on the title/author
+KR1_cites %>% filter(doi %in% dup_doi | title %in% dup_title) %>% arrange(title) %>% select(title_orig, year, journal_iso, volume, pages, author) %>% print(n=nrow(.))
+
+# check doi matches are the same as the title matches
+KR1_cites %>% filter(!is.na(doi)) %>% filter(duplicated(doi)) %>% pull(title) %>% .[]== dup_title
+
+# check others for fuzzy matches
+fuzzymatch_potential_duplicates(KR1_cites$title_orig)
+
+# happy no other fuzzy matches are duplicates
+
+# Now, we pivot wider the title and file, then join back onto the de-duplicated data
+
+kr1_files <- KR1_cites %>% 
+  select(title, file) %>% 
+  mutate(val = 1) %>% 
+  pivot_wider(names_from = file, values_from = val, values_fill = 0)
+
+kr1_dedup <- KR1_cites %>% 
+  filter(!duplicated(title)) %>% 
+  select(-file)
+
+KR2_cites <- full_join(kr1_dedup, kr1_files)
+
+# KR2_refs --- 
+
+dup_title <- KR1_refs %>% filter(duplicated(title)) %>% pull(title)
+dup_doi <- KR1_refs %>% filter(!is.na(doi)) %>% filter(duplicated(doi)) %>% pull(doi)
+
+KR1_refs %>% filter(doi %in% dup_doi | title %in% dup_title) %>% arrange(title) %>% select(title_orig) %>% summarise(n=n()) %>% filter(n<2)
+KR1_refs %>% filter(doi %in% dup_doi | title %in% dup_title) %>% arrange(title) %>% select(author) %>% summarise(n=n()) %>% filter(n<2)
+
+# check manually - OK happy all duplicates are matches based on the title/author
+KR1_refs %>% filter(doi %in% dup_doi | title %in% dup_title) %>% arrange(title) %>% select(title_orig, year, journal_iso, volume, pages, author) %>% print(n=nrow(.))
+
+# doi matches are different to title matches this time, but all doi are within title matches
+KR1_refs %>% filter(!is.na(doi)) %>% filter(doi %in% dup_doi) %>% pull(title) %in% dup_title
+
+# fuzzy matches
+fuzzymatch_potential_duplicates(KR1_refs$title_orig) %>% print(n=nrow(.))
+fuzzymatch_potential_duplicates(KR1_refs$title) %>% print(n=nrow(.))
+
+# manual check of potential matches
+checkmatch_potential_duplicates("Honey bee colony losses", list(KR1_refs), title_orig, year, journal_iso, author)
+checkmatch_potential_duplicates("OCCURRENCE OF CHALKBROOD CAUSED BY ASCOSPHAERA-AGGREGATA", list(KR1_refs), title_orig, year, journal_iso, author)
+
+# the first is duplicated, but this is captured in the true duplicates, and the fuzzy match is not a duplicate.
+
+# Now, we pivot wider the title and file, then join back onto the de-duplicated data
+
+kr1_files <- KR1_refs %>% 
+  select(title, file) %>% 
+  mutate(val = 1) %>% 
+  pivot_wider(names_from = file, values_from = val, values_fill = 0)
+
+kr1_dedup <- KR1_refs %>% 
+  filter(!duplicated(title)) %>% 
+  select(-file)
+
+KR2_refs <- full_join(kr1_dedup, kr1_files)
+
+# ====================================================
+
+# Matches with our database
+
+# first check the fuzzy matches with the KR2cites:
+fuzzymatch_potential_duplicates(V1 = DB1$title_orig, V2 = KR2_cites$title_orig)
+# no fuzzy matches
+
+# match exact matches using PID
+KR2_cites <- KR2_cites %>% 
+  left_join(DB1 %>% select(PID, title_orig))
+
+# then check the fuzzy matches with the KR2refs:
+fuzzymatch_potential_duplicates(V1 = DB1$title_orig, V2 = KR2_refs$title_orig)
+
+# happy no fuzzy matches to contend with
+
+# match the exact matches using PID
+KR2_refs <- KR2_refs %>% 
+  left_join(DB1 %>% select(PID, title_orig)) 
+
+# examine output
+KR2_refs %>% filter(!is.na(PID)) %>% summarise(across(Arena_refs.txt:Wood_refs.txt, sum)) %>% t()
+KR2_cites %>% filter(!is.na(PID)) %>% summarise(across(cites_Arena.txt:cites_Wood.txt, sum)) %>% t()
