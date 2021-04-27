@@ -18,6 +18,8 @@ library(tidytext)    # tidy methods for term document matrices
 library(revtools)    # grouping (optional)
 library(fuzzyjoin)   # fuzzy matching of text strings
 library(tidystringdist) # fuzzy matching of text strings
+library(Matrix)
+library(ecodist)
 
 #library(synthesisr) # duplicates and handling of bibliography
 #library(litsearchr) # automated development of new search terms (optional)
@@ -60,23 +62,35 @@ saveRDS(DB1, "data/flashLIT_DB1.RDS")
 
 # 2. cluster data =======================================================================
 
-# here we cluster the data, by first developing a graph of the documents, with edges as the similarity between documents
-# in this version, we weight the abstract similarity more than the title and keywords, and these more than the authors, cited references, and cited journals
-# clutering is automated to iterate until all groups are below a threshold size
+# clustering the data involves 
+# a) developing the input data
+# b) developing the distances to cluster with
+# c) applying the cluster algotithm
 
-#### we need to adjust this script to have different versions based on the various cluster input options
-## cluster options:
+# input data options and diatances ----------------
 # 1) TAK-raw, 2) TAK-clean 3)TAK-stem
 # 4) TAKKP-stem, 5) Bib, 6) TAKKP-stem-Au and 6) TAKKP-stem-Bib.
 # comparing across 1:3 and 3:7 separately.
+# all versions have eiclidean (_E) and bray-curtis (_BC) versions.
 
 # DB1 <- readRDS("data/flashLIT_DB1.RDS")
 
-source("./R/flashLIT_natural_clusters.R")  
+source("./R/flashLIT_alternative_cluster_inputs.R")
 
-saveRDS(graph_DB1, "data/flashLIT_graph_DB1.RDS")
-saveRDS(coms_DB1, "data/flashLIT_coms_DB1.RDS")
+saveRDS(list(
+  TAK_raw_E, TAK_clean_E, TAK_stem_E, TAKKP_stem_E, Bib_E, TAKKP_stem_Bib_E, TAKKP_stem_Au_E,
+  TAK_raw_BC, TAK_clean_BC, TAK_stem_BC, TAKKP_stem_BC, Bib_BC, TAKKP_stem_Bib_BC, TAKKP_stem_Au_BC
+), "data/flashLIT_Distances.RDS")
 
+# clustering -------------------------------------
+
+# source("./R/flashLIT_alternative_cluster_methods.R")   *** script in progress
+
+
+# older version using scimeetr like process
+# source("./R/flashLIT_natural_clusters.R")  
+# saveRDS(graph_DB1, "data/flashLIT_graph_DB1.RDS")
+# saveRDS(coms_DB1, "data/flashLIT_coms_DB1.RDS")
 # coms_DB1 %>% group_by(cl_4) %>% summarise(n=n()) %>% ggplot() + geom_histogram(aes(x=n), bins = 10)
 
 # 3. develop group summaries ==========================================================

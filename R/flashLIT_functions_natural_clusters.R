@@ -3,6 +3,139 @@
 # flashLIT: fast, largely automated, systematic handling of literature.
 # workingconservation@gmail.com
 
+
+# ==================================================================
+
+
+#' flashLIT_dtm
+#' 
+#' calculates a tidy document-term table. Inputs can be textcols (strings of text seperated by spaces), sepcols (strings of terms, seperated by a sepchr, e.g. "; ") or listcols (each row containing a list of entries). This function will process all into a tidy document-term-matrix.
+#' 
+#' textcols are, for example, title and abstract. These are united, and then split into single words, bigrams and trigrams. Words with fewer than smlwordlimit characters are removed before processing further.
+#' 
+#' sepcols are, for example, keywords and keywords_plus. These are united, then split into tokens using the sepchr. 
+#' 
+#' listcols are, for example, already cleaned author lists. These are unnested into tokens.
+#' 
+#' Then, textcols, sepcols, and splitcols are bound into a single dataframe, and frequencies are calculated using tidytext::bind_tf_idf. Sparse terms (i.e. terms found in a < minDocFreq proportion of documents) are removed, as are those that are too frequently found (i.e. terms found in a > maxDocFreq proportion of documents).
+#' 
+#' NOTE1: columns are not further cleaned before processing. all cleaning should be done prior to using this function.
+#' NOTE2: no standardisation or weighting is applied. this should be done after function is applied.
+#' NOTE3: it is recommended to seperate word-based columns from author-based columns from bibliography-based columns. these do not make sense to combine at this stage.
+#'
+#' @param df the tibble dataframe containing PID and desired columns
+#' @param textcols specify the text columns as var(col1, col2) else NULL
+#' @param sepcols specify the sep columns as var(col1, col2) else NULL
+#' @param listcols specify the split columns as var(col1, col2) else NULL
+#' @param smlwordlimit 
+#' @param minDocFreq 
+#' @param maxDocFreq  
+#'
+#' @return
+#' @export
+#'
+#' @examples
+flashLIT_dtm <- function(df, 
+                        textcols = vars(title, abstract), 
+                        sepcols = vars(keywords, keywords_plus),
+                        listcols = NULL,
+                        sepchr = "; ",
+                        smlwordlimit = 3,
+                        minDocFreq = 0.01,
+                        maxDocFreq = 0.85
+                        ){
+  # initiate empty sets
+  dtx <- tibble(PID = character(), token = character())
+  dty <- tibble(PID = character(), token = character())
+  dtz <- tibble(PID = character(), token = character())
+  
+  # merge text columns, and tokenize, to words, and ngrams, then filter out small words
+  # text columns are sets of words seperated by a space
+  if(!is.null(textcols)){
+    x <- df %>% 
+      select(PID, !!!textcols) %>% 
+      unite("token", !!!textcols, sep = " ")
+    dtx <- bind_rows(
+      x %>% unnest_tokens(word, token) %>% rename(token = word),
+      x %>% unnest_tokens(ngram, token, token = "ngrams", n = 2) %>% rename(token = ngram),
+      x %>% unnest_tokens(ngram, token, token = "ngrams", n = 3) %>% rename(token = ngram)
+    ) %>% 
+    filter(!(str_length(token) < smlwordlimit))   
+  }
+  
+  # merge sep columns, and tokenize
+  # sep columns are sets of tokens seperated by a character
+  if(!is.null(sepcols)){
+    y <- df %>% 
+      select(PID, !!!sepcols) %>% 
+      unite("token", !!!sepcols, sep = sepchr)
+    dty <-  y %>% unnest_tokens(word, token, token = stringr::str_split, pattern = sepchr) %>% rename(token = word)
+  }  
+  
+  # merge split columns, and tokenize
+  # split columns are already lists
+  # we need to unnest these 
+  if(!is.null(listcols)){
+    dty <- df %>% 
+      select(PID, !!!listcols) %>% 
+      pivot_longer(cols = c(!!!listcols), values_to = "token") %>% 
+      select(-name) %>% 
+      unnest(token) 
+  }  
+   
+  # combine all 
+    dt <- bind_rows(dtx, dty, dtz) 
+
+   # calculate frequencies  (tf = n/totalinPID, idf = ln(nDocs/nDocsWithTerm), tf_idf = tf*idf)
+    dt <- dt %>% 
+      count(PID, token, sort = TRUE) %>% 
+      bind_tf_idf(token, PID, n)
+    
+   # remove the sparse terms
+    dt <- dt %>% 
+      filter(idf < log(nrow(df)/((minDocFreq)*nrow(df))) ) %>% 
+      filter(idf > log(nrow(df)/((maxDocFreq)*nrow(df))) )
+  return(dt)
+}
+
+#' flashLIT_distance
+#' 
+#' The document-term tidy_dtm is cast into a sparse matrix, and into a distance metric using ecodist (and the method specified by the distMethod). Euclidean distances are recommended for relatively dense matrices, whereas bray-curtis may be better for counts with many zeros. see other options in ?ecodist::distance
+#'
+#' @param dt document-term tidy dtm 
+#' @param distMethod character indicating ecodist::distance method
+#'
+#' @return a distance object (includes all PIDs, no diagonals, unidirectional) converted into tidy format.
+#' @export
+#'
+#' @examples
+flashLIT_distance <- function(dt, doclist, distMethod = "euclidean"){  
+  
+  # cast to matrix, complete with missing PIDs
+  tokens <- dt$token %>% unique() %>% sort()
+  dm <- Matrix::sparseMatrix(
+    i = match(dt$PID, doclist), 
+    j = match(dt$token, tokens), 
+    x = dt$n,
+    dims = c(length(doclist), length(tokens)), 
+    dimnames = list(doclist, tokens)
+  )
+
+  # calculate distance
+  if(distMethod == "euclidean"){
+    dst <- dist(dm, method = distMethod)
+  } else if(distMethod == "bray-curtis"){
+    dst <- ecodist::bcdist(dm)
+  } else {
+    dst <- dist(dm, method = distMethod)
+  }
+  
+  # tidy and return  (includes all PIDs, no diagonals, unidirectional)
+  tdst <- tidy(dst) %>% 
+    rename(PID.x = item1, PID.y = item2, text_distance = distance)
+  return(tdst)
+}
+
 # ==================================================================
 
 #' scimeetr_coupling
