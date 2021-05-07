@@ -533,3 +533,83 @@ iteratively_cluster <- function(graph,
   names(clbase)[-1] <- paste("cl", 0:(length(clbase)-2), sep = "_")
   return(clbase)
 }
+
+
+# ====================================================================
+
+
+#' cast_dist
+#' 
+#' convert tidy distances (x, y, dist) back to distance object using specified set of labels
+#'
+#' @param df tidy distance object (e.g. tidy(dist))
+#' @param labs  the labels of the data (may be more than in the tidy object)
+#' @param distMethod to attach to object
+#'
+#' @return a dist object (diag = FALSE, upper = FALSE)
+#' @export
+#'
+#' @examples
+cast_dist <- function(df, labs){
+  labs <- labs %>% unique() %>% sort()
+  df <- df %>% filter(PID.x %in% labs, PID.y %in% labs)
+  dm <- Matrix::sparseMatrix(
+    j = match(df$PID.x, labs), 
+    i = match(df$PID.y, labs), 
+    x = pull(df[,3]),
+    dims = c(length(labs), length(labs)), 
+    dimnames = list(labs, labs)
+  )
+  dist <- as.dist(dm, diag = FALSE, upper = FALSE)
+}
+
+
+# =================================================================================
+# normalise and calculate distance from two columns
+
+#' euclidean
+#' 
+#' calculate the euclidean distance between two points (0,0) and (a,b)
+#'
+#' @param a 
+#' @param b 
+#'
+#' @return dbl value
+#' @export
+#'
+#' @examples
+euclidean <- function(a, b){ sqrt(sum((a - b)^2))}
+
+#' dist_rescaler
+#' 
+#' given a dataframe, df, with columns x and y, rescale x and y (to 0:1) and calculate either the mean or euclidean distance. 
+#'
+#' @param df 
+#' @param x 
+#' @param y 
+#' @param func either mean or euclidean or other custom function
+#'
+#' @return a df removing x and y and replacing with a single "distance" column
+#' @export
+#'
+#' @examples
+dist_rescaler <- function(df, x, y, func = mean){
+  x <- enquo(x); y <- enquo(y)
+  df %>% 
+    mutate(x = scales::rescale(!!x),
+           y = scales::rescale(!!y)) %>% 
+    mutate(distance = map2_dbl(x,y, func)) %>% 
+    select(-x, -y, -!!x, -!!y)
+}
+
+#' median_groupsize
+#' given a vector of group labels, return the median group size
+#'
+#' @param x a vector of group labels
+#'
+#' @return an integer
+#' @export
+#'
+#' @examples
+median_groupsize <- function(x){ x %>% table() %>% median()}
+# =================================================================================

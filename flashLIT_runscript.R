@@ -12,14 +12,22 @@
 # setup ==========================================================================
 # libraries
 library(tidyverse)   # programming
+
 library(scimeetr)    # grouping, identification of reading lists
 library(tm)          # text mining (term document)
 library(tidytext)    # tidy methods for term document matrices
 library(revtools)    # grouping (optional)
 library(fuzzyjoin)   # fuzzy matching of text strings
 library(tidystringdist) # fuzzy matching of text strings
-library(Matrix)
-library(ecodist)
+
+library(Matrix)      # Sparse matrix
+library(ecodist)     # distance functions
+library(factoextra)  # visualisation of distances, and clustering
+library(fastcluster) # hclust clustering
+library(dendextend)  # clustering functions
+library(WGCNA)       # clustering & cluster visualisation  # needs BiocManager::install("GO.db") among others
+library(dynamicTreeCut) # cutting for HC 
+source("./R/modified_dynamicCutTree_cutreeDynamicHybrid.R") # modified to give the full results
 
 #library(synthesisr) # duplicates and handling of bibliography
 #library(litsearchr) # automated development of new search terms (optional)
@@ -31,6 +39,8 @@ source("./R/flashLIT_functions_natural_clusters.R")
 source("./R/flashLIT_functions_group_summaries.R")  
 source("./R/flashLIT_functions_term_list_revision.R")
 source("./R/flashLIT_functions_categorise_papers.R")
+
+
 
 # initial term lists
 source("./data/flashLIT_term_lists.R")
@@ -78,12 +88,33 @@ saveRDS(DB1, "data/flashLIT_DB1.RDS")
 source("./R/flashLIT_alternative_cluster_inputs.R")
 
 saveRDS(list(
-  TAK_raw_E, TAK_clean_E, TAK_stem_E, TAKKP_stem_E, Bib_E, TAKKP_stem_Bib_E, TAKKP_stem_Au_E,
-  TAK_raw_BC, TAK_clean_BC, TAK_stem_BC, TAKKP_stem_BC, Bib_BC, TAKKP_stem_Bib_BC, TAKKP_stem_Au_BC
+  TAK_raw_E = TAK_raw_E, 
+  TAK_clean_E = TAK_clean_E, 
+  TAK_stem_E = TAK_stem_E, 
+  TAKKP_stem_E = TAKKP_stem_E, 
+  Au_clean_E = Au_clean_E,
+  Bib_clean_E = Bib_clean_E, 
+  TAKKPBib_stem_Em = TAKKPBib_stem_Em, 
+  TAKKPAu_stem_Em = TAKKPAu_stem_Em,
+  TAKKPBib_stem_Ee = TAKKPBib_stem_Ee, 
+  TAKKPAu_stem_Ee = TAKKPAu_stem_Ee,
+  
+  TAK_raw_BC = TAK_raw_BC, 
+  TAK_clean_BC = TAK_clean_BC, 
+  TAK_stem_BC = TAK_stem_BC, 
+  TAKKP_stem_BC = TAKKP_stem_BC, 
+  Au_clean_BC = Au_clean_BC,
+  Bib_clean_BC = Bib_clean_BC, 
+  TAKKPBib_stem_BCm = TAKKPBib_stem_BCm, 
+  TAKKPAu_stem_BCm = TAKKPAu_stem_BCm,
+  TAKKPBib_stem_BCe = TAKKPBib_stem_BCe, 
+  TAKKPAu_stem_BCe = TAKKPAu_stem_BCe
 ), "data/flashLIT_Distances.RDS")
 
 # clustering -------------------------------------
 
+# indata <- readRDS("data/flashLIT_Distances.RDS")
+# DB1 <- readRDS("data/flashLIT_DB1.RDS")
 # source("./R/flashLIT_alternative_cluster_methods.R")   *** script in progress
 
 

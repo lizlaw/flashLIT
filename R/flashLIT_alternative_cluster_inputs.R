@@ -5,6 +5,7 @@
 ## cluster options:
 # 1) TAK-raw, 2) TAK-clean 3)TAK-stem
 # 4) TAKKP-stem, 5) Bib, 6) TAKKP-stem-Au and 6) TAKKP-stem-Bib.
+# the latter two can be normalised and then joined to a single distance with mean or euclidean. 
 # we will be comparing across 1:3 and 3:7 separately.
 
 ## distance method options: euclidean or bray-curtis
@@ -82,14 +83,26 @@ TAK_stem_BC <- TAK_stem %>% flashLIT_distance(doclist = DB1$PID, distMethod = "b
 TAKKP_stem_E <- TAKKP_stem %>% flashLIT_distance(doclist = DB1$PID, distMethod = "euclidean")
 TAKKP_stem_BC <- TAKKP_stem %>% flashLIT_distance(doclist = DB1$PID, distMethod = "bray-curtis")
 
-Au_E <- Au %>% flashLIT_distance(doclist = DB1$PID, distMethod = "euclidean") %>% rename(au_distance = text_distance)
-Au_BC <- Au %>% flashLIT_distance(doclist = DB1$PID, distMethod = "bray-curtis") %>% rename(au_distance = text_distance)
+Au_clean_E <- Au %>% flashLIT_distance(doclist = DB1$PID, distMethod = "euclidean") %>% rename(au_distance = text_distance)
+Au_clean_BC <- Au %>% flashLIT_distance(doclist = DB1$PID, distMethod = "bray-curtis") %>% rename(au_distance = text_distance)
 
-Bib_E <- Bib %>% flashLIT_distance(doclist = DB1$PID, distMethod = "euclidean") %>% rename(bib_distance = text_distance)
-Bib_BC <- Bib %>% flashLIT_distance(doclist = DB1$PID, distMethod = "bray-curtis") %>% rename(bib_distance = text_distance)
+Bib_clean_E <- Bib %>% flashLIT_distance(doclist = DB1$PID, distMethod = "euclidean") %>% rename(bib_distance = text_distance)
+Bib_clean_BC <- Bib %>% flashLIT_distance(doclist = DB1$PID, distMethod = "bray-curtis") %>% rename(bib_distance = text_distance)
 
-# 6) TAKKP-stem-Au and 6) TAKKP-stem-Bib.
-TAKKP_stem_Au_E <- full_join(TAKKP_stem_E, Au_E)
-TAKKP_stem_Au_BC <- full_join(TAKKP_stem_BC, Au_BC)
-TAKKP_stem_Bib_E <- full_join(TAKKP_stem_E, Bib_E)
-TAKKP_stem_Bib_BC <- full_join(TAKKP_stem_BC, Bib_BC)
+# 6) TAKKP-stem-Au and 6) TAKKP-stem-Bib. ---
+# First join the information 
+TAKKPAu_stem_E <- full_join(TAKKP_stem_E, Au_clean_E)
+TAKKPAu_stem_BC <- full_join(TAKKP_stem_BC, Au_clean_BC)
+TAKKPBib_stem_E <- full_join(TAKKP_stem_E, Bib_clean_E)
+TAKKPBib_stem_BC <- full_join(TAKKP_stem_BC, Bib_clean_BC)
+
+# then normalise and average, or euclidean distance to one metric
+TAKKPAu_stem_Em <- dist_rescaler(TAKKPAu_stem_E, text_distance, au_distance, mean)
+TAKKPAu_stem_BCm <- dist_rescaler(TAKKPAu_stem_BC, text_distance, au_distance, mean)
+TAKKPBib_stem_Em <- dist_rescaler(TAKKPBib_stem_E, text_distance, bib_distance, mean)
+TAKKPBib_stem_BCm <- dist_rescaler(TAKKPBib_stem_BC, text_distance, bib_distance, mean)
+
+TAKKPAu_stem_Ee <- dist_rescaler(TAKKPAu_stem_E, text_distance, au_distance, euclidean)
+TAKKPAu_stem_BCe <- dist_rescaler(TAKKPAu_stem_BC, text_distance, au_distance, euclidean)
+TAKKPBib_stem_Ee <- dist_rescaler(TAKKPBib_stem_E, text_distance, bib_distance, euclidean)
+TAKKPBib_stem_BCe <- dist_rescaler(TAKKPBib_stem_BC, text_distance, bib_distance, euclidean)
